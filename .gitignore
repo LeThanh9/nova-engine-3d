@@ -1,0 +1,7 @@
+# NovaEngine 3D - Git Ignore
+node_modules/
+dist/
+dist-native/
+*.log
+.DS_Store
+Thumbs.db

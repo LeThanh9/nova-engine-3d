@@ -1,0 +1,37 @@
+{
+  "name": "nova-engine-3d",
+  "version": "2.0.0",
+  "description": "NovaEngine 3D - Unreal Engine 4 Style 3D Game Engine & Studio",
+  "main": "main-electron.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win portable",
+    "build": "node build-exe.js"
+  },
+  "keywords": [
+    "game-engine",
+    "3d",
+    "unreal-engine",
+    "threejs",
+    "cannonjs",
+    "gamedev"
+  ],
+  "author": "LeThanh9",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.lethanh9.novaengine3d",
+    "productName": "NovaEngine 3D Studio",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable",
+      "requestedExecutionLevel": "asInvoker"
+    }
+  }
+}

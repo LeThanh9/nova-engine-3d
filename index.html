@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NovaEngine 3D Studio - Unreal Edition</title>
+  <link rel="stylesheet" href="css/engine.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Top Header & Menubar -->
+    <header id="top-header">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <div class="logo-icon">⚡</div>
+          <span>NOVA<span style="color: var(--ue-orange);">3D</span></span>
+        </div>
+        <input type="text" id="project-title" class="project-title-input" value="Unreal Sci-Fi Arena 3D" title="Tên dự án">
+      </div>
+
+      <!-- Playback Controls -->
+      <div class="playback-toolbar">
+        <button id="btn-play" class="playback-btn btn-play" title="Chơi Thử Nghiệm 3D (F5)">
+          <span>▶</span> Chơi
+        </button>
+        <button id="btn-pause" class="playback-btn btn-pause" title="Tạm Dừng">
+          <span>⏸</span> Tạm Dừng
+        </button>
+        <button id="btn-step" class="playback-btn" title="Tiến 1 Frame (F6)">
+          <span>⏭</span> Bước
+        </button>
+        <button id="btn-stop" class="playback-btn disabled" title="Dừng & Khôi Phục Trạng Thái">
+          <span>⏹</span> Dừng
+        </button>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="action-group">
+        <select id="template-select" class="btn btn-outline" title="Chọn mẫu game 3D">
+          <option value="adventure3d">🎮 Mẫu: Đấu Trường Sci-Fi 3D (Góc nhìn thứ 3)</option>
+          <option value="cyberpunk3d">🌆 Mẫu: Thành Phố Cyberpunk Neon</option>
+          <option value="physics3d">🧱 Mẫu: Đấu Trường Vật Lý 3D</option>
+          <option value="blank">📄 Dự Án 3D Trống</option>
+        </select>
+        
+        <button id="btn-save-json" class="btn" title="Lưu file dự án">💾 Lưu Dự Án</button>
+        <button id="btn-export-html" class="btn btn-export" title="Xuất game thành 1 file HTML duy nhất chạy 3D mượt mà không cần internet!">
+          🚀 Xuất Game HTML
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace (Unreal Engine 4 Layout) -->
+    <div id="main-workspace">
+      <!-- Left Sidebar: Modes / Place Actors Panel -->
+      <aside id="modes-panel">
+        <div class="modes-header">
+          <span>Modes / Place Actors</span>
+        </div>
+        <div class="modes-content">
+          <div class="modes-section-title">Khối Hình Học (Basic Shapes)</div>
+          <div class="modes-grid">
+            <button class="place-actor-btn" data-spawn-actor="cube">
+              <span class="icon">📦</span>
+              <span>Khối Hộp</span>
+            </button>
+            <button class="place-actor-btn" data-spawn-actor="sphere">
+              <span class="icon">🔮</span>
+              <span>Hình Cầu</span>
+            </button>
+            <button class="place-actor-btn" data-spawn-actor="cylinder">
+              <span class="icon">🥫</span>
+              <span>Hình Trụ</span>
+            </button>
+            <button class="place-actor-btn" data-spawn-actor="capsule">
+              <span class="icon">💊</span>
+              <span>Viên Nhộng</span>
+            </button>
+            <button class="place-actor-btn" data-spawn-actor="plane">
+              <span class="icon">⬜</span>
+              <span>Mặt Đất</span>
+            </button>
+            <button class="place-actor-btn" data-spawn-actor="gem">
+              <span class="icon">💎</span>
+              <span>Ngọc Bay</span>
+            </button>
+          </div>
+
+          <div class="modes-section-title mt-2">Ánh Sáng (Lights)</div>
+          <div class="modes-grid">
+            <button class="place-actor-btn" data-spawn-actor="pointlight">
+              <span class="icon">💡</span>
+              <span>Đèn Điểm</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center 3D Viewport -->
+      <main id="center-viewport-wrapper">
+        <!-- UE4 Viewport Toolbar -->
+        <div class="ue4-viewport-toolbar">
+          <div class="ue4-tool-group">
+            <span class="ue4-tool-btn active">Perspective</span>
+            <select id="view-mode-select" class="ue4-tool-btn" style="background: transparent;">
+              <option value="lit">Lit (PBR & Đổ Bóng)</option>
+              <option value="unlit">Unlit (Không Ánh Sáng)</option>
+              <option value="wireframe">Wireframe (Khung Dây)</option>
+            </select>
+            <button id="toggle-grid" class="ue4-tool-btn active">Lưới</button>
+          </div>
+
+          <!-- Transform Gizmo Mode (W, E, R) -->
+          <div class="ue4-tool-group">
+            <button id="tool-translate" class="ue4-tool-btn active" title="Di Chuyển (Phím W)">✥ Di Chuyển (W)</button>
+            <button id="tool-rotate" class="ue4-tool-btn" title="Xoay (Phím E)">⟳ Xoay (E)</button>
+            <button id="tool-scale" class="ue4-tool-btn" title="Thu Phóng (Phím R)">⤢ Kéo Giãn (R)</button>
+          </div>
+
+          <!-- Snapping & Camera Speed -->
+          <div class="ue4-tool-group">
+            <select id="snap-trans-select" class="ue4-tool-btn" style="background: transparent;">
+              <option value="1.0">Snap: 1.0m</option>
+              <option value="0.5">Snap: 0.5m</option>
+              <option value="2.0">Snap: 2.0m</option>
+              <option value="0">Tắt Snap</option>
+            </select>
+            <span style="font-size: 10px; color: var(--text-muted);">Cam:</span>
+            <input type="range" id="cam-speed-slider" min="1" max="8" value="4" style="width: 50px;">
+            <span id="cam-speed-val" style="font-size: 10px; color: var(--text-muted); min-width: 20px;">4x</span>
+          </div>
+        </div>
+
+        <!-- 3D Canvas -->
+        <div class="canvas-container">
+          <canvas id="viewport-3d-canvas"></canvas>
+        </div>
+      </main>
+
+      <!-- Right Sidebar: UE4 World Outliner & Details Panel -->
+      <aside id="right-sidebar-3d">
+        <!-- World Outliner -->
+        <div class="outliner-container">
+          <div class="modes-header">
+            <span>World Outliner (Danh Sách Actor)</span>
+          </div>
+          <div id="world-outliner-list" class="outliner-scroll">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Details Panel -->
+        <div class="details-container">
+          <div class="modes-header">
+            <span>Chi Tiết (Details Panel)</span>
+          </div>
+          <div id="details-content" class="details-scroll">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Bottom Panel: Output Log & Code Studio -->
+    <footer id="bottom-panel-3d">
+      <div class="bottom-tabs-bar">
+        <button class="bottom-tab-btn active" data-tab="log">📜 Nhật Ký & Gỡ Lỗi (Output Log)</button>
+        <button class="bottom-tab-btn" data-tab="code">💻 Lập Trình Script 3D</button>
+        <button id="btn-clear-console" class="mini-btn" style="margin-left: auto;">Xóa Log</button>
+      </div>
+
+      <!-- Tab: Output Log -->
+      <div class="bottom-tab-view active" data-tab="log">
+        <div id="console-logs" class="console-logs-scroll">
+          <!-- Logs stream here -->
+        </div>
+      </div>
+
+      <!-- Tab: Code Studio -->
+      <div class="bottom-tab-view" data-tab="code">
+        <div style="flex: 1; display: flex; flex-direction: column; padding: 6px; background: #0b0f17;">
+          <div id="code-editor-target-3d" style="font-size: 11px; font-weight: 600; color: var(--ue-cyan); margin-bottom: 4px;">Đang viết mã cho: ...</div>
+          <textarea id="full-code-editor-3d" style="flex: 1; background: #06090e; color: #38bdf8; font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--border); border-radius: 4px; padding: 8px; resize: none; outline: none;"></textarea>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Status Bar -->
+    <div id="status-bar-3d">
+      <div class="stats-group">
+        <span id="stat-fps">60 FPS</span>
+        <span id="stat-actors">0 Actors</span>
+        <span id="stat-score">Điểm: 0</span>
+      </div>
+      <div>
+        <span>NovaEngine 3D Studio v2.0.0 (Unreal Edition) | WebGL2 & Native Desktop Ready</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Local 3D Libraries (100% Offline & Desktop EXE Ready) -->
+  <script src="js/libs/three.min.js"></script>
+  <script src="js/libs/cannon.min.js"></script>
+  <script src="js/libs/OrbitControls.js"></script>
+  <script src="js/libs/TransformControls.js"></script>
+
+  <!-- Engine 3D Subsystems -->
+  <script src="js/engine/math.js"></script>
+  <script src="js/engine/audio.js"></script>
+  <script src="js/engine/actor3d.js"></script>
+  <script src="js/engine/physics3d.js"></script>
+  <script src="js/engine/particles3d.js"></script>
+  <script src="js/engine/renderer3d.js"></script>
+  <script src="js/engine/templates3d.js"></script>
+  <script src="js/engine/exporter3d.js"></script>
+  <script src="js/engine/core3d.js"></script>
+  <script src="js/engine/editor3d-ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
