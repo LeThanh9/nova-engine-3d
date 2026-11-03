@@ -23,6 +23,14 @@ function initNovaEngine3D() {
   const exporter3d = new GameExporter3D(engine3d);
   window.gameExporter3D = exporter3d;
 
+  // Initialize AGY AI Copilot
+  if (typeof AGYCopilot !== 'undefined') {
+    const aiCopilot = new AGYCopilot(engine3d);
+    engine3d.aiCopilot = aiCopilot;
+    window.aiCopilot = aiCopilot;
+    aiCopilot.bindUI();
+  }
+
   // Initial UI refresh
   ui.refreshAll();
 

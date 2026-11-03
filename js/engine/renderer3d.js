@@ -348,7 +348,85 @@ class Renderer3D {
   }
 
   setupAtmosphere() {
-    // 1. Background Cosmic Stars
+    // 1. Unreal Engine Atmospheric Sky Dome (Rayleigh Sunset & Cosmic Nebula)
+    const skyGeom = new THREE.SphereGeometry(360, 32, 24);
+    const skyCanvas = document.createElement('canvas');
+    skyCanvas.width = 1024;
+    skyCanvas.height = 512;
+    const sctx = skyCanvas.getContext('2d');
+
+    // Multi-stop Atmospheric Rayleigh Gradient (Zenith deep space -> Twilight sunset)
+    const skyGrad = sctx.createLinearGradient(0, 0, 0, 512);
+    skyGrad.addColorStop(0.0, '#020409'); // Deep Space Zenith
+    skyGrad.addColorStop(0.38, '#08142b'); // High Altitude Midnight Blue
+    skyGrad.addColorStop(0.48, '#1e293b'); // Upper Atmospheric Haze
+    skyGrad.addColorStop(0.50, '#38bdf8'); // Electric Cyan Horizon Rim
+    skyGrad.addColorStop(0.52, '#f97316'); // Warm Twilight Sunset Line
+    skyGrad.addColorStop(0.56, '#0f172a'); // Ground Horizon
+    skyGrad.addColorStop(1.0, '#020617'); // Nadir
+    sctx.fillStyle = skyGrad;
+    sctx.fillRect(0, 0, 1024, 512);
+
+    // Glowing Sun Disc with Atmospheric Corona Flare
+    const sunGrad = sctx.createRadialGradient(680, 190, 0, 680, 190, 110);
+    sunGrad.addColorStop(0, '#ffffff');
+    sunGrad.addColorStop(0.15, '#fff7ed');
+    sunGrad.addColorStop(0.45, 'rgba(249, 115, 22, 0.45)');
+    sunGrad.addColorStop(0.75, 'rgba(56, 189, 248, 0.2)');
+    sunGrad.addColorStop(1.0, 'rgba(0,0,0,0)');
+    sctx.fillStyle = sunGrad;
+    sctx.beginPath();
+    sctx.arc(680, 190, 110, 0, Math.PI * 2);
+    sctx.fill();
+
+    // Distant Cyber City Skyline & Mountain Silhouettes on Horizon
+    sctx.fillStyle = '#060a12';
+    sctx.beginPath();
+    sctx.moveTo(0, 280);
+    for (let x = 0; x <= 1024; x += 16) {
+      const h = Math.sin(x * 0.02) * 12 + Math.sin(x * 0.05) * 8 + Math.sin(x * 0.1) * 6;
+      sctx.lineTo(x, 268 - h);
+    }
+    sctx.lineTo(1024, 310);
+    sctx.lineTo(0, 310);
+    sctx.closePath();
+    sctx.fill();
+
+    // Blinking Cyber Beacons on Mountain Peaks
+    sctx.fillStyle = '#ef4444';
+    for (let bx = 60; bx < 1024; bx += 140) {
+      sctx.beginPath();
+      sctx.arc(bx, 245, 1.8, 0, Math.PI * 2);
+      sctx.fill();
+    }
+
+    const skyTex = new THREE.CanvasTexture(skyCanvas);
+    const skyMat = new THREE.MeshBasicMaterial({
+      map: skyTex,
+      side: THREE.BackSide,
+      fog: false
+    });
+    this.skyDome = new THREE.Mesh(skyGeom, skyMat);
+    this.scene.add(this.skyDome);
+
+    // 2. Volumetric Sun Light Shafts (God Rays)
+    const shaftGeom = new THREE.ConeGeometry(22, 70, 32, 1, true);
+    shaftGeom.translate(0, -35, 0);
+    shaftGeom.rotateX(Math.PI / 2);
+    const shaftMat = new THREE.MeshBasicMaterial({
+      color: '#fff5ea',
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    this.godRayCone = new THREE.Mesh(shaftGeom, shaftMat);
+    this.godRayCone.position.set(25, 48, 30);
+    this.godRayCone.lookAt(0, 3.5, -4);
+    this.scene.add(this.godRayCone);
+
+    // 3. Background Cosmic Stars
     const starCount = 350;
     const starGeom = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
@@ -359,10 +437,10 @@ class Renderer3D {
       const v = Math.random();
       const theta = u * 2.0 * Math.PI;
       const phi = Math.acos(2.0 * v - 1.0);
-      const r = 250 + Math.random() * 50;
+      const r = 240 + Math.random() * 50;
 
       starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      starPos[i * 3 + 1] = Math.abs(r * Math.sin(phi) * Math.sin(theta)) + 10;
+      starPos[i * 3 + 1] = Math.abs(r * Math.sin(phi) * Math.sin(theta)) + 12;
       starPos[i * 3 + 2] = r * Math.cos(phi);
 
       const isCyan = Math.random() > 0.6;
@@ -384,15 +462,15 @@ class Renderer3D {
     const stars = new THREE.Points(starGeom, starMat);
     this.scene.add(stars);
 
-    // 2. Unreal Engine Volumetric Dust Motes floating in the light
-    const moteCount = 120;
+    // 4. Unreal Engine Volumetric Dust Motes floating in the light
+    const moteCount = 150;
     const moteGeom = new THREE.BufferGeometry();
     const motePos = new Float32Array(moteCount * 3);
     this.moteData = [];
 
     for (let i = 0; i < moteCount; i++) {
       motePos[i * 3] = (Math.random() - 0.5) * 55;
-      motePos[i * 3 + 1] = Math.random() * 12 + 0.5;
+      motePos[i * 3 + 1] = Math.random() * 14 + 0.5;
       motePos[i * 3 + 2] = (Math.random() - 0.5) * 55;
       this.moteData.push({
         baseY: motePos[i * 3 + 1],
@@ -406,7 +484,7 @@ class Renderer3D {
       size: 0.45,
       color: '#38bdf8',
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.75,
       blending: THREE.AdditiveBlending
     });
     this.motePoints = new THREE.Points(moteGeom, moteMat);
@@ -414,13 +492,13 @@ class Renderer3D {
   }
 
   setupLighting() {
-    // 1. Hemisphere Light (Sky: Soft Electric Blue, Ground: Charcoal Navy)
-    this.hemiLight = new THREE.HemisphereLight('#7dd3fc', '#111827', 0.65);
+    // 1. Hemisphere Light (Sky: Soft Electric Cyan Blue, Ground: Charcoal Slate)
+    this.hemiLight = new THREE.HemisphereLight('#60a5fa', '#090d16', 0.75);
     this.scene.add(this.hemiLight);
 
-    // 2. Primary Directional Sunlight (Warm Sunlight with Soft Cascaded Shadows)
-    this.dirLight = new THREE.DirectionalLight('#fff1dc', 1.8);
-    this.dirLight.position.set(25, 45, 30);
+    // 2. Primary Directional Sunlight (Warm Amber Golden Sunlight with Soft Cascaded Shadows)
+    this.dirLight = new THREE.DirectionalLight('#fff5ea', 2.2);
+    this.dirLight.position.set(25, 48, 30);
     this.dirLight.castShadow = true;
 
     this.dirLight.shadow.mapSize.width = 2048;
@@ -432,14 +510,18 @@ class Renderer3D {
     this.dirLight.shadow.camera.right = shadowD;
     this.dirLight.shadow.camera.top = shadowD;
     this.dirLight.shadow.camera.bottom = -shadowD;
-    this.dirLight.shadow.bias = -0.0004;
-
+    this.dirLight.shadow.bias = -0.0003;
     this.scene.add(this.dirLight);
 
-    // 3. Stylized Rim Light (Cyan Rim light from behind, classic UE4 studio lighting)
-    this.rimLight = new THREE.DirectionalLight('#00f0ff', 0.9);
-    this.rimLight.position.set(-20, 20, -25);
+    // 3. Key Rim Light (Vivid Electric Cyan Backlight from rear left)
+    this.rimLight = new THREE.DirectionalLight('#00f0ff', 1.8);
+    this.rimLight.position.set(-24, 22, -26);
     this.scene.add(this.rimLight);
+
+    // 4. Secondary Fill Rim Light (Vivid Neon Magenta Backlight from rear right)
+    this.rimLight2 = new THREE.DirectionalLight('#e879f9', 1.2);
+    this.rimLight2.position.set(24, 18, -26);
+    this.scene.add(this.rimLight2);
   }
 
   setupGrid() {
@@ -621,6 +703,11 @@ class Renderer3D {
       return this.buildCharacterMesh(actor);
     }
 
+    // 1b. Unreal High-Poly Floating Fortress Arena
+    if (actor.tag === 'arena' || actor.name.includes('Arena')) {
+      return this.buildFloatingFortressMesh(actor);
+    }
+
     // 2. High-Tech Jump Pad Actor
     if (actor.tag === 'jumppad') {
       return this.buildJumpPadMesh(actor);
@@ -686,6 +773,121 @@ class Renderer3D {
     return mesh;
   }
 
+  // Builds an Epic Unreal Engine 4 Sci-Fi Floating Battle Fortress
+  buildFloatingFortressMesh(actor) {
+    const group = new THREE.Group();
+    const dims = actor.dimensions || { width: 14, height: 1.0, depth: 14 };
+
+    // 1. Heavy Titanium Deck
+    const deckMat = new THREE.MeshStandardMaterial({
+      color: '#151e2e',
+      metalness: 0.92,
+      roughness: 0.18
+    });
+    if (this.textures['scifi_hex']) {
+      deckMat.map = this.textures['scifi_hex'];
+      if (this.textures['scifi_hex_normal']) {
+        deckMat.normalMap = this.textures['scifi_hex_normal'];
+        deckMat.normalScale = new THREE.Vector2(1.5, 1.5);
+      }
+    }
+
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(dims.width, 0.6, dims.depth), deckMat);
+    deck.castShadow = true;
+    deck.receiveShadow = true;
+    group.add(deck);
+
+    // Glowing Neon Perimeter Inlay
+    const neonTrimMat = new THREE.MeshStandardMaterial({
+      color: '#00f0ff',
+      emissive: '#00f0ff',
+      emissiveIntensity: 2.5,
+      roughness: 0.1
+    });
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(dims.width + 0.3, 0.12, dims.depth + 0.3), neonTrimMat);
+    trim.position.y = 0.25;
+    group.add(trim);
+
+    // Beveled Under-Armor Keel
+    const keelMat = new THREE.MeshStandardMaterial({
+      color: '#0f172a',
+      metalness: 0.95,
+      roughness: 0.25
+    });
+    const keel = new THREE.Mesh(new THREE.CylinderGeometry(dims.width / 2, (dims.width / 2) - 1.8, 1.2, 4), keelMat);
+    keel.rotateY(Math.PI / 4);
+    keel.position.y = -0.7;
+    keel.castShadow = true;
+    group.add(keel);
+
+    // 4 Heavy Anti-Gravity Repulsor Engines underneath with glowing blue plasma cones
+    const engineMat = new THREE.MeshStandardMaterial({
+      color: '#1e293b',
+      metalness: 0.95,
+      roughness: 0.1
+    });
+    const plasmaMat = new THREE.MeshStandardMaterial({
+      color: '#00f0ff',
+      emissive: '#00f0ff',
+      emissiveIntensity: 3.5,
+      transparent: true,
+      opacity: 0.85
+    });
+
+    const repOffset = dims.width * 0.35;
+    const offsets = [
+      [-repOffset, -repOffset],
+      [repOffset, -repOffset],
+      [-repOffset, repOffset],
+      [repOffset, repOffset]
+    ];
+
+    offsets.forEach(([ox, oz]) => {
+      const thruster = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.95, 1.2, 16), engineMat);
+      thruster.position.set(ox, -1.0, oz);
+      thruster.castShadow = true;
+      group.add(thruster);
+
+      const plume = new THREE.Mesh(new THREE.ConeGeometry(0.7, 1.8, 16), plasmaMat);
+      plume.rotateX(Math.PI);
+      plume.position.set(ox, -2.1, oz);
+      group.add(plume);
+    });
+
+    // 4 Corner Cyber Monolith Energy Pillars with floating rings
+    const pillarMat = new THREE.MeshStandardMaterial({
+      color: '#1e293b',
+      metalness: 0.9,
+      roughness: 0.2
+    });
+    const pOffset = (dims.width / 2) - 0.7;
+    const pCorners = [
+      [-pOffset, -pOffset],
+      [pOffset, -pOffset],
+      [-pOffset, pOffset],
+      [pOffset, pOffset]
+    ];
+
+    pCorners.forEach(([px, pz]) => {
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.2, 0.8), pillarMat);
+      pillar.position.set(px, 2.1, pz);
+      pillar.castShadow = true;
+      pillar.receiveShadow = true;
+      group.add(pillar);
+
+      const conduit = new THREE.Mesh(new THREE.BoxGeometry(0.85, 3.8, 0.15), neonTrimMat);
+      conduit.position.set(px, 2.1, pz);
+      group.add(conduit);
+
+      const summitGeom = new THREE.OctahedronGeometry(0.38, 0);
+      const summit = new THREE.Mesh(summitGeom, neonTrimMat);
+      summit.position.set(px, 4.6, pz);
+      group.add(summit);
+    });
+
+    return group;
+  }
+
   // Builds an Articulated Sci-Fi Robot Mannequin (Unreal Engine 4 Hero Rig)
   buildCharacterMesh(actor) {
     const group = new THREE.Group();
@@ -694,24 +896,24 @@ class Renderer3D {
     // Body Armor Material (Dark Metallic Titanium with specular sheen)
     const armorMat = new THREE.MeshStandardMaterial({
       color: '#1e293b',
-      metalness: 0.88,
-      roughness: 0.22
+      metalness: 0.9,
+      roughness: 0.18
     });
 
     // Visor / Core Neon Emissive Material (Unreal Glowing Cyan)
     const neonMat = new THREE.MeshStandardMaterial({
       color: '#00f0ff',
       emissive: '#00f0ff',
-      emissiveIntensity: 2.8,
-      roughness: 0.1,
-      metalness: 0.5
+      emissiveIntensity: 3.2,
+      roughness: 0.08,
+      metalness: 0.4
     });
 
     // Joint Accents
     const jointMat = new THREE.MeshStandardMaterial({
-      color: '#475569',
+      color: '#334155',
       metalness: 0.95,
-      roughness: 0.15
+      roughness: 0.12
     });
 
     // 1. Torso Group
@@ -722,10 +924,15 @@ class Renderer3D {
     torso.castShadow = true;
     torsoGroup.add(torso);
 
+    // Sculpted Chest Armor Plates
+    const chestPlate = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.55, 0.12), jointMat);
+    chestPlate.position.set(0, 0.18, 0.35);
+    torsoGroup.add(chestPlate);
+
     // Glowing Chest Reactor
     const core = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16), neonMat);
     core.rotateX(Math.PI / 2);
-    core.position.set(0, 0.12, 0.35);
+    core.position.set(0, 0.18, 0.4);
     torsoGroup.add(core);
 
     // 2. Head Group
@@ -736,31 +943,53 @@ class Renderer3D {
     head.castShadow = true;
     headGroup.add(head);
 
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.18, 0.1), neonMat);
+    // Curved Cyber Visor Slit
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.16, 0.1), neonMat);
     visor.position.set(0, 0.02, 0.32);
     headGroup.add(visor);
+
+    // Top Crest Fin
+    const crest = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 0.45), neonMat);
+    crest.position.set(0, 0.38, -0.05);
+    headGroup.add(crest);
 
     torsoGroup.add(headGroup);
 
     // 3. Shoulders & Arms (Pivot at shoulder joint for running animation)
     const armLGroup = new THREE.Group();
-    armLGroup.position.set(-0.65, 0.35, 0);
-    const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), jointMat);
+    armLGroup.position.set(-0.68, 0.35, 0);
+    const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), jointMat);
     armLGroup.add(shoulderL);
+    // Pauldron
+    const pauldronL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.2, 0.35), armorMat);
+    pauldronL.position.set(0, 0.08, 0);
+    armLGroup.add(pauldronL);
     const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.75, 16), armorMat);
     armL.position.set(0, -0.4, 0);
     armL.castShadow = true;
     armLGroup.add(armL);
+    // Wrist Blaster
+    const blasterL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.14), neonMat);
+    blasterL.position.set(0, -0.65, 0.08);
+    armLGroup.add(blasterL);
     torsoGroup.add(armLGroup);
 
     const armRGroup = new THREE.Group();
-    armRGroup.position.set(0.65, 0.35, 0);
-    const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), jointMat);
+    armRGroup.position.set(0.68, 0.35, 0);
+    const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), jointMat);
     armRGroup.add(shoulderR);
+    // Pauldron
+    const pauldronR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.2, 0.35), armorMat);
+    pauldronR.position.set(0, 0.08, 0);
+    armRGroup.add(pauldronR);
     const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.75, 16), armorMat);
     armR.position.set(0, -0.4, 0);
     armR.castShadow = true;
     armRGroup.add(armR);
+    // Wrist Blaster
+    const blasterR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.14), neonMat);
+    blasterR.position.set(0, -0.65, 0.08);
+    armRGroup.add(blasterR);
     torsoGroup.add(armRGroup);
 
     // 4. Jetpack on Torso back
@@ -785,8 +1014,9 @@ class Renderer3D {
     legL.position.set(0, -0.45, 0);
     legL.castShadow = true;
     legLGroup.add(legL);
-    const footL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.35), armorMat);
+    const footL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.38), armorMat);
     footL.position.set(0, -0.88, 0.08);
+    footL.castShadow = true;
     legLGroup.add(footL);
     group.add(legLGroup);
 
@@ -798,8 +1028,9 @@ class Renderer3D {
     legR.position.set(0, -0.45, 0);
     legR.castShadow = true;
     legRGroup.add(legR);
-    const footR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.35), armorMat);
+    const footR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.38), armorMat);
     footR.position.set(0, -0.88, 0.08);
+    footR.castShadow = true;
     legRGroup.add(footR);
     group.add(legRGroup);
 
@@ -1014,6 +1245,11 @@ class Renderer3D {
         pos[i * 3] += Math.sin(time * 0.2 + d.offset) * 0.008;
       }
       this.motePoints.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Subtle Volumetric God Ray Shimmer
+    if (this.godRayCone) {
+      this.godRayCone.rotation.z += dt * 0.03;
     }
 
     // Render with UnrealBloomPass Post-Processing

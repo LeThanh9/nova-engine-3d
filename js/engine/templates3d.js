@@ -53,19 +53,19 @@ const EngineTemplates3D = {
           ]
         },
 
-        // High Floating Neon Platform
+        // High Floating Neon Battle Fortress (Unreal Engine 4 Sci-Fi Architecture)
         {
           name: 'Floating Neon Arena',
-          tag: 'solid',
+          tag: 'arena',
           shape: 'box',
           dimensions: { width: 14, height: 1.0, depth: 14 },
           transform: { position: { x: 0, y: 3.5, z: -8 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
           material: {
             color: '#151e2e',
-            metalness: 0.9,
-            roughness: 0.3,
+            metalness: 0.92,
+            roughness: 0.18,
             emissive: '#00f0ff',
-            emissiveIntensity: 0.1,
+            emissiveIntensity: 0.2,
             castShadow: true,
             receiveShadow: true
           },

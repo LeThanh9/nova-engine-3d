@@ -48,6 +48,9 @@
         <button id="btn-export-html" class="btn btn-export" title="Xuất game thành 1 file HTML duy nhất chạy 3D mượt mà không cần internet!">
           🚀 Xuất Game HTML
         </button>
+        <div class="ai-status-pill" title="AGY AI Copilot đang kết nối trực tiếp với NovaEngine 3D">
+          <span class="ai-pulse-dot"></span> AGY AI CONNECTED
+        </div>
       </div>
     </header>
 
@@ -194,6 +197,7 @@
       <div class="bottom-tabs-bar">
         <button class="bottom-tab-btn active" data-tab="log">📜 Nhật Ký & Gỡ Lỗi (Output Log)</button>
         <button class="bottom-tab-btn" data-tab="code">💻 Lập Trình Script 3D</button>
+        <button class="bottom-tab-btn" data-tab="ai" style="color: #38bdf8;">🤖 Trợ Lý A.I (AGY Copilot)</button>
         <button id="btn-clear-console" class="mini-btn" style="margin-left: auto;">Xóa Log</button>
       </div>
 
@@ -209,6 +213,29 @@
         <div style="flex: 1; display: flex; flex-direction: column; padding: 6px; background: #0b0f17;">
           <div id="code-editor-target-3d" style="font-size: 11px; font-weight: 600; color: var(--ue-cyan); margin-bottom: 4px;">Đang viết mã cho: ...</div>
           <textarea id="full-code-editor-3d" style="flex: 1; background: #06090e; color: #38bdf8; font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--border); border-radius: 4px; padding: 8px; resize: none; outline: none;"></textarea>
+        </div>
+      </div>
+
+      <!-- Tab: AGY AI Copilot -->
+      <div class="bottom-tab-view" data-tab="ai">
+        <div class="ai-copilot-container">
+          <div class="ai-chips-bar">
+            <span style="font-size: 11px; font-weight: 700; color: var(--ue-cyan); margin-right: 4px;">Lệnh AI nhanh:</span>
+            <button class="ai-prompt-chip" data-cmd="Nâng cấp đồ họa cực đại Unreal 4">✨ Đồ Họa Ultra UE4</button>
+            <button class="ai-prompt-chip" data-cmd="Đổi khí quyển hoàng hôn rực rỡ">🌆 Hoàng Hôn Sunset</button>
+            <button class="ai-prompt-chip" data-cmd="Kích hoạt phong cách Cyberpunk Neon Night">🌃 Cyberpunk Night</button>
+            <button class="ai-prompt-chip" data-cmd="Thêm 4 thùng nổ và chuẩn bị chiến đấu">💥 Thêm Thùng Nổ</button>
+            <button class="ai-prompt-chip" data-cmd="Tạo thêm bệ phóng siêu năng">🚀 Thêm Bệ Phóng</button>
+            <button class="ai-prompt-chip" data-cmd="Triệu hồi Goliath Titan Boss">🤖 Triệu Hồi Boss</button>
+            <button class="ai-prompt-chip" data-cmd="Quét và sửa lỗi tự động">🔍 Quét & Sửa Lỗi</button>
+          </div>
+          <div id="ai-chat-messages" class="ai-chat-messages">
+            <!-- Messages rendered by AGYCopilot -->
+          </div>
+          <div class="ai-input-bar">
+            <input type="text" id="ai-prompt-input" placeholder="Yêu cầu AGY AI tạo màn chơi, ánh sáng, quái vật hoặc kiểm tra lỗi (Ví dụ: Thêm 4 thùng nổ)...">
+            <button id="btn-ai-send" class="btn-ai-send">Gửi Lệnh (Enter)</button>
+          </div>
         </div>
       </div>
     </footer>
@@ -250,6 +277,7 @@
   <script src="js/engine/exporter3d.js"></script>
   <script src="js/engine/core3d.js"></script>
   <script src="js/engine/editor3d-ui.js"></script>
+  <script src="js/engine/ai-copilot.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
