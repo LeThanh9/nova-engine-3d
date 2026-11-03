@@ -65,8 +65,8 @@ class NovaEngine3D {
     });
     canvasElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // Load initial GTA 6 Vice City Open World Template
-    this.loadTemplate('gta6_vice_city');
+    // Load initial Dude Theft Wars City Sandbox Template
+    this.loadTemplate('dude_theft_wars');
 
     // Start 3D Loop
     requestAnimationFrame((t) => this.loop(t));
@@ -139,7 +139,8 @@ class NovaEngine3D {
 
   loadTemplate(key) {
     let tpl;
-    if (key === 'gta6_vice_city' || key === 'gta6' || key === 'vice_city') tpl = EngineTemplates3D.createGTA6ViceCity();
+    if (key === 'dude_theft_wars' || key === 'dtw' || key === 'dude') tpl = EngineTemplates3D.createDudeTheftWars();
+    else if (key === 'gta6_vice_city' || key === 'gta6' || key === 'vice_city') tpl = EngineTemplates3D.createGTA6ViceCity();
     else if (key === 'adventure3d') tpl = EngineTemplates3D.createAdventure3D();
     else if (key === 'cyberpunk3d') tpl = EngineTemplates3D.createCyberpunk3D();
     else if (key === 'physics3d') tpl = EngineTemplates3D.createPhysicsPlayground3D();
@@ -161,6 +162,19 @@ class NovaEngine3D {
       const mesh = this.renderer3d.meshMap.get(this.selectedActor);
       if (mesh) {
         this.renderer3d.transformControls.attach(mesh);
+      }
+    }
+
+    // Set cinematic starting camera for Dude Theft Wars
+    if (this.renderer3d && this.renderer3d.camera) {
+      if (key === 'dude_theft_wars' || key === 'dtw' || key === 'dude') {
+        this.renderer3d.camera.position.set(-16, 11, 4);
+        if (this.renderer3d.orbitControls) {
+          this.renderer3d.orbitControls.target.set(2, 2.5, -17);
+          this.renderer3d.orbitControls.update();
+        } else {
+          this.renderer3d.camera.lookAt(2, 2.5, -17);
+        }
       }
     }
 

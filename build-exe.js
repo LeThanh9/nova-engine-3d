@@ -28,3 +28,4 @@ console.log('✅ ĐÃ XUẤT FILE .EXE THÀNH CÔNG!');
 console.log(`📁 File thực thi sẵn sàng:`);
 console.log(`   - ${targetExe}`);
 console.log(`   - ${distExe}`);
+

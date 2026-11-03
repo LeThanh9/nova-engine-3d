@@ -2,7 +2,235 @@
  * NovaEngine 3D - Ready-to-Play 3D Unreal Engine 4 Style Game Templates
  */
 const EngineTemplates3D = {
-  // 0. Grand Theft Auto VI: Vice City 2026 Open World Template (Supercars, Coastal Ocean, Palm Trees & Neon Hotels)
+  // 0. Dude Theft Wars 3D: Ultra Detailed City Sandbox (Jack's House, Dude Burger, Airport & Stunt Biplane)
+  createDudeTheftWars() {
+    return {
+      name: 'Dude Theft Wars 3D: Ultra Detailed City Sandbox',
+      version: '3.5.0 (Dude Theft Wars Edition)',
+      actors: [
+        // 1. Protagonist Jack (The Dude Hero)
+        {
+          name: 'Jack (The Dude Hero)',
+          tag: 'player',
+          shape: 'dude_character',
+          dimensions: { radius: 0.55, height: 1.8 },
+          transform: { position: { x: 0, y: 1.0, z: -16.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#f59e0b', metalness: 0.1, roughness: 0.8 },
+          physics: { enabled: true, type: 'dynamic', mass: 2.0, friction: 0.2, restitution: 0.0 },
+          behaviors: [
+            { type: 'characterController3D', speed: 9.5, jumpForce: 10.5 },
+            { type: 'cameraFollow3D', distance: 6.2, height: 3.0, smooth: 0.14 }
+          ]
+        },
+
+        // 2. Jack's Luxury Villa, Driveway & Backyard Pool
+        {
+          name: "Jack's Villa & Backyard Pool",
+          tag: 'dude_villa',
+          shape: 'dude_villa',
+          dimensions: { width: 18, height: 10, depth: 14 },
+          transform: { position: { x: 0, y: 0, z: -30.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 3. Super High-Bounce Trampoline
+        {
+          name: 'Mega Bouncy Trampoline',
+          tag: 'trampoline',
+          shape: 'trampoline',
+          dimensions: { radius: 2.2, height: 0.8 },
+          transform: { position: { x: 10.0, y: 0, z: -17.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 4. Dude Burger Fast Food (Mascot 360)
+        {
+          name: 'Dude Burger Fast Food (Mascot 360)',
+          tag: 'dude_burger',
+          shape: 'dude_burger',
+          dimensions: { width: 20, height: 8, depth: 16 },
+          transform: { position: { x: 50, y: 0, z: 20 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 5. Dude Police Station HQ
+        {
+          name: 'Dude Police Station HQ',
+          tag: 'police_station',
+          shape: 'police_station',
+          dimensions: { width: 24, height: 12, depth: 18 },
+          transform: { position: { x: -50, y: 0, z: 20 }, rotation: { x: 0, y: 90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 6. Airport Runway & Control Tower
+        {
+          name: 'Dude City Airport Runway (240m)',
+          tag: 'airport_runway',
+          shape: 'airport_runway',
+          dimensions: { width: 34, height: 0.2, depth: 220 },
+          transform: { position: { x: 95, y: 0, z: -40 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 7. Stunt Biplane (Flyable Airplane)
+        {
+          name: 'Stunt Biplane (Flyable Flyer)',
+          tag: 'vehicle',
+          shape: 'stunt_plane',
+          dimensions: { width: 10.5, height: 3.2, depth: 6.5 },
+          transform: { position: { x: 95, y: 0.1, z: -20 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#facc15', metalness: 0.3, roughness: 0.4 },
+          physics: { enabled: true, type: 'kinematic', mass: 850 }
+        },
+
+        // 8. Soccer Stadium with Giant Soccer Ball
+        {
+          name: 'Dude Soccer Stadium Pitch',
+          tag: 'soccer_stadium',
+          shape: 'soccer_stadium',
+          dimensions: { width: 45, height: 1.0, depth: 65 },
+          transform: { position: { x: -65, y: 0, z: -70 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+        {
+          name: 'Giant Bouncy Soccer Ball',
+          tag: 'soccer_ball',
+          shape: 'soccer_ball',
+          dimensions: { radius: 1.4 },
+          transform: { position: { x: -65, y: 1.4, z: -70 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#ffffff', roughness: 0.2, metalness: 0.1 },
+          physics: { enabled: true, type: 'dynamic', mass: 6.0, restitution: 0.85, friction: 0.3 }
+        },
+
+        // 9. Skate Park Stunt Mega Ramp
+        {
+          name: 'Skate Park Stunt Launch Ramp',
+          tag: 'skate_ramp',
+          shape: 'skate_ramp',
+          dimensions: { width: 14, height: 7.5, depth: 22 },
+          transform: { position: { x: -80, y: 0, z: 20 }, rotation: { x: 0, y: 180, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 10. Octan Gas Station
+        {
+          name: 'Octan Gas Station & Pumps',
+          tag: 'gas_station',
+          shape: 'gas_station',
+          dimensions: { width: 18, height: 6.5, depth: 16 },
+          transform: { position: { x: -45, y: 0, z: 70 }, rotation: { x: 0, y: 90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 11. Ammu-Nation Gun Store
+        {
+          name: 'Ammu-Nation Gun Store',
+          tag: 'gun_shop',
+          shape: 'gun_shop',
+          dimensions: { width: 16, height: 7, depth: 14 },
+          transform: { position: { x: 45, y: 0, z: 70 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 12. Drivable Dude Ramp Buggy (parked on Jack's Driveway)
+        {
+          name: 'Dude Ramp Buggy (Wedge)',
+          tag: 'vehicle',
+          shape: 'vehicle',
+          dimensions: { width: 2.3, height: 1.1, depth: 4.6 },
+          transform: { position: { x: -13.0, y: 0.1, z: -15.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#f59e0b', metalness: 0.85, roughness: 0.2 },
+          physics: { enabled: true, type: 'kinematic', mass: 1200 }
+        },
+
+        // 13. Police Cruiser
+        {
+          name: 'Police Patrol Cruiser',
+          tag: 'vehicle',
+          shape: 'vehicle',
+          dimensions: { width: 2.2, height: 1.25, depth: 4.8 },
+          transform: { position: { x: -55.0, y: 0.1, z: 20.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#1e293b', metalness: 0.8, roughness: 0.25 },
+          physics: { enabled: true, type: 'kinematic', mass: 1500 }
+        },
+
+        // 14. Dude Formula GT Racer
+        {
+          name: 'Dude Formula GT Racer',
+          tag: 'vehicle',
+          shape: 'vehicle',
+          dimensions: { width: 2.2, height: 0.9, depth: 4.6 },
+          transform: { position: { x: 55.0, y: 0.1, z: 20.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#ef4444', metalness: 0.95, roughness: 0.1 },
+          physics: { enabled: true, type: 'kinematic', mass: 1100 }
+        },
+
+        // 15. Dude City Crossroad Highway
+        {
+          name: 'Dude Central Boulevard (N-S)',
+          tag: 'road',
+          shape: 'road',
+          dimensions: { width: 14, height: 0.3, depth: 240 },
+          transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#151821', metalness: 0.2, roughness: 0.65 },
+          physics: { enabled: true, type: 'static' }
+        },
+        {
+          name: 'Dude Avenue (E-W)',
+          tag: 'road',
+          shape: 'road',
+          dimensions: { width: 14, height: 0.3, depth: 220 },
+          transform: { position: { x: 0, y: 0.01, z: 35 }, rotation: { x: 0, y: 90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#151821', metalness: 0.2, roughness: 0.65 },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 16. Dude City Sunny Green Plain
+        {
+          name: 'Dude City Sunny Grass Plain',
+          tag: 'solid',
+          shape: 'plane',
+          dimensions: { width: 300, depth: 300 },
+          transform: { position: { x: 0, y: -0.05, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#4ade80', metalness: 0.05, roughness: 0.95 },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 17. Tropical Palm Trees
+        {
+          name: 'Dude Palm 1',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.5 },
+          transform: { position: { x: -22, y: 0, z: 22 }, rotation: { x: 0, y: 30, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Dude Palm 2',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.2 },
+          transform: { position: { x: 16, y: 0, z: 20 }, rotation: { x: 0, y: 75, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Dude Palm 3',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.8 },
+          transform: { position: { x: 16, y: 0, z: -16 }, rotation: { x: 0, y: 150, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Dude Palm 4',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.0 },
+          transform: { position: { x: -22, y: 0, z: -12 }, rotation: { x: 0, y: 220, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        }
+      ]
+    };
+  },
+
+  // 1. Grand Theft Auto VI: Vice City 2026 Open World Template (Supercars, Coastal Ocean, Palm Trees & Neon Hotels)
   createGTA6ViceCity() {
     return {
       name: 'GTA 6: Vice City Next-Gen 3D',

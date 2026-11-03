@@ -33,10 +33,11 @@ class Renderer3D {
     // Procedural Texture Cache
     this.textures = {};
 
-    // GTA 6 Dynamic Simulation Meshes
+    // GTA 6 & Dude Theft Wars Dynamic Simulation Meshes
     this.animatedOceans = [];
     this.animatedPalms = [];
     this.animatedVehicles = [];
+    this.animatedDudeProps = [];
 
     // Freefly Camera State
     this.isFreeflying = false;
@@ -830,6 +831,44 @@ class Renderer3D {
   }
 
   buildMeshFromActor(actor) {
+    // 0. Dude Theft Wars 3D Actors
+    if (actor.shape === 'dude_character') {
+      return this.buildDudeCharacterMesh(actor);
+    }
+    if (actor.tag === 'dude_villa' || actor.shape === 'dude_villa') {
+      return this.buildDudeVillaMesh(actor);
+    }
+    if (actor.tag === 'dude_burger' || actor.shape === 'dude_burger') {
+      return this.buildDudeBurgerMesh(actor);
+    }
+    if (actor.tag === 'police_station' || actor.shape === 'police_station') {
+      return this.buildPoliceStationMesh(actor);
+    }
+    if (actor.tag === 'airport_runway' || actor.shape === 'airport_runway') {
+      return this.buildAirportRunwayMesh(actor);
+    }
+    if (actor.shape === 'stunt_plane') {
+      return this.buildStuntBiplaneMesh(actor);
+    }
+    if (actor.tag === 'soccer_stadium' || actor.shape === 'soccer_stadium') {
+      return this.buildSoccerStadiumMesh(actor);
+    }
+    if (actor.tag === 'soccer_ball' || actor.shape === 'soccer_ball') {
+      return this.buildSoccerBallMesh(actor);
+    }
+    if (actor.tag === 'skate_ramp' || actor.shape === 'skate_ramp') {
+      return this.buildSkateRampMesh(actor);
+    }
+    if (actor.tag === 'trampoline' || actor.shape === 'trampoline') {
+      return this.buildTrampolineMesh(actor);
+    }
+    if (actor.tag === 'gas_station' || actor.shape === 'gas_station') {
+      return this.buildGasStationMesh(actor);
+    }
+    if (actor.tag === 'gun_shop' || actor.shape === 'gun_shop') {
+      return this.buildGunShopMesh(actor);
+    }
+
     // 1. Stylized Sci-Fi Character Mesh (Unreal Hero Robot Mannequin)
     if (actor.tag === 'player' || actor.shape === 'character') {
       return this.buildCharacterMesh(actor);
@@ -1051,6 +1090,694 @@ class Renderer3D {
       summit.position.set(px, 4.6, pz);
       group.add(summit);
     });
+
+    return group;
+  }
+
+  // =========================================================================
+  // DUDE THEFT WARS 3D: ICONIC PROCEDURAL ARCHITECTURE & VEHICLES
+  // =========================================================================
+
+  // --- 1. PROTAGONIST JACK (THE DUDE HERO) ---
+  buildDudeCharacterMesh(actor) {
+    const group = new THREE.Group();
+    group.isCharacterGroup = true;
+
+    const shirtColor = actor.material?.color || '#f59e0b'; // Iconic yellow dude shirt
+    const shirtMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.7, metalness: 0.1 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: '#ffdfba', roughness: 0.6, metalness: 0.05 });
+    const pantsMat = new THREE.MeshStandardMaterial({ color: '#1e3a8a', roughness: 0.75, metalness: 0.1 });
+    const capMat = new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.6, metalness: 0.1 });
+    const shadesMat = new THREE.MeshStandardMaterial({ color: '#090d16', roughness: 0.1, metalness: 0.95 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.5, metalness: 0.1 });
+
+    // Torso (Yellow T-Shirt)
+    const torsoGroup = new THREE.Group();
+    torsoGroup.position.set(0, 1.05, 0);
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.0, 0.52), shirtMat);
+    torso.castShadow = true;
+    torsoGroup.add(torso);
+
+    // Head with Dude Cap & Cool Sunglasses
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 0.82, 0);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.55), skinMat);
+    head.castShadow = true;
+    headGroup.add(head);
+
+    // Red Snapback Cap
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.18, 0.68), capMat);
+    cap.position.set(0, 0.32, 0.04);
+    headGroup.add(cap);
+
+    // Cool Black Sunglasses Slit
+    const shades = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.14, 0.08), shadesMat);
+    shades.position.set(0, 0.06, 0.29);
+    headGroup.add(shades);
+
+    torsoGroup.add(headGroup);
+
+    // Arms with Shoulder Pivots
+    const armLGroup = new THREE.Group();
+    armLGroup.position.set(-0.56, 0.32, 0);
+    const armL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.85, 0.28), shirtMat);
+    armL.position.y = -0.32;
+    armL.castShadow = true;
+    armLGroup.add(armL);
+    const handL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 0.24), skinMat);
+    handL.position.y = -0.76;
+    armLGroup.add(handL);
+    torsoGroup.add(armLGroup);
+
+    const armRGroup = new THREE.Group();
+    armRGroup.position.set(0.56, 0.32, 0);
+    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.85, 0.28), shirtMat);
+    armR.position.y = -0.32;
+    armR.castShadow = true;
+    armRGroup.add(armR);
+    const handR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 0.24), skinMat);
+    handR.position.y = -0.76;
+    armRGroup.add(handR);
+    const gun = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 0.55), new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.3, metalness: 0.8 }));
+    gun.position.set(0, -0.76, 0.28);
+    armRGroup.add(gun);
+    torsoGroup.add(armRGroup);
+
+    group.add(torsoGroup);
+
+    // Legs with Hip Pivots
+    const legLGroup = new THREE.Group();
+    legLGroup.position.set(-0.24, 0.65, 0);
+    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.9, 0.34), pantsMat);
+    legL.position.y = -0.25;
+    legL.castShadow = true;
+    legLGroup.add(legL);
+    const shoeL = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.48), shoeMat);
+    shoeL.position.set(0, -0.68, 0.06);
+    legLGroup.add(shoeL);
+    group.add(legLGroup);
+
+    const legRGroup = new THREE.Group();
+    legRGroup.position.set(0.24, 0.65, 0);
+    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.9, 0.34), pantsMat);
+    legR.position.y = -0.25;
+    legR.castShadow = true;
+    legRGroup.add(legR);
+    const shoeR = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.48), shoeMat);
+    shoeR.position.set(0, -0.68, 0.06);
+    legRGroup.add(shoeR);
+    group.add(legRGroup);
+
+    actor._runtime.characterRig = {
+      torso: torsoGroup,
+      head: headGroup,
+      armL: armLGroup,
+      armR: armRGroup,
+      legL: legLGroup,
+      legR: legRGroup
+    };
+
+    return group;
+  }
+
+  // --- 2. JACK'S LUXURY VILLA, GARAGE & POOL COMPLEX ---
+  buildDudeVillaMesh(actor) {
+    const group = new THREE.Group();
+
+    // 1. Two-Story Main Villa
+    const wallMat = new THREE.MeshStandardMaterial({ color: '#fef9c3', roughness: 0.6, metalness: 0.1 });
+    const roofMat = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.5, metalness: 0.15 });
+    const woodMat = new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.7, metalness: 0.1 });
+    const concreteMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.8, metalness: 0.15 });
+
+    const houseGeom = new THREE.BoxGeometry(18, 8.5, 14);
+    const house = new THREE.Mesh(houseGeom, wallMat);
+    house.position.y = 4.25;
+    house.castShadow = true;
+    house.receiveShadow = true;
+    group.add(house);
+
+    // Windows with White Frames & Blue Tinted Glass
+    const winFrameMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.4 });
+    [[-4, 2.5, 7.05], [4, 2.5, 7.05], [-4, 6.2, 7.05], [4, 6.2, 7.05], [-7.05, 4.0, 0], [7.05, 4.0, 0]].forEach(p => {
+      const isSide = Math.abs(p[0]) > 6;
+      const frameGeom = isSide ? new THREE.BoxGeometry(0.15, 2.2, 2.6) : new THREE.BoxGeometry(2.6, 2.2, 0.15);
+      const frame = new THREE.Mesh(frameGeom, winFrameMat);
+      frame.position.set(p[0], p[1], p[2]);
+      group.add(frame);
+    });
+
+    // Front Wooden Door & Porch Step
+    const door = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.8, 0.2), woodMat);
+    door.position.set(0, 1.9, 7.08);
+    const doorknob = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: '#fbbf24', metalness: 0.9 }));
+    doorknob.position.set(0.8, 1.9, 7.22);
+    const porch = new THREE.Mesh(new THREE.BoxGeometry(4.0, 0.35, 2.0), concreteMat);
+    porch.position.set(0, 0.18, 7.9);
+    group.add(door, doorknob, porch);
+
+    // Terracotta 4-Sided Hip Roof
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(13.6, 4.5, 4), roofMat);
+    roof.rotation.y = Math.PI / 4;
+    roof.position.set(0, 10.75, 0);
+    roof.castShadow = true;
+    group.add(roof);
+
+    // Brick Chimney
+    const chimney = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3.5, 1.6), woodMat);
+    chimney.position.set(5.0, 10.5, 2.0);
+    group.add(chimney);
+
+    // 2. Attached Car Garage
+    const garage = new THREE.Mesh(new THREE.BoxGeometry(10, 6, 12), new THREE.MeshStandardMaterial({ color: '#f3f4f6', roughness: 0.6 }));
+    garage.position.set(-13, 3.0, 0);
+    garage.castShadow = true;
+    garage.receiveShadow = true;
+    group.add(garage);
+
+    const garageDoor = new THREE.Mesh(new THREE.PlaneGeometry(7.8, 4.8), new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.4, metalness: 0.5 }));
+    garageDoor.position.set(-13, 2.5, 6.06);
+    group.add(garageDoor);
+
+    // Concrete Driveway
+    const driveway = new THREE.Mesh(new THREE.BoxGeometry(12, 0.15, 18), concreteMat);
+    driveway.position.set(-13, 0.08, 14);
+    driveway.receiveShadow = true;
+    group.add(driveway);
+
+    // 3. Basketball Hoop & Court at Front of Garage
+    const bbPole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 5.2, 8), new THREE.MeshStandardMaterial({ color: '#334155', metalness: 0.8 }));
+    bbPole.position.set(-13, 2.6, 21.5);
+    const bbBoard = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.6, 0.1), winFrameMat);
+    bbBoard.position.set(-13, 4.6, 21.3);
+    const bbRim = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.05, 8, 16), new THREE.MeshStandardMaterial({ color: '#f97316', roughness: 0.3 }));
+    bbRim.rotation.x = Math.PI / 2;
+    bbRim.position.set(-13, 4.0, 20.8);
+    group.add(bbPole, bbBoard, bbRim);
+
+    // 4. Backyard Swimming Pool
+    const poolDeck = new THREE.Mesh(new THREE.BoxGeometry(15, 0.3, 11), new THREE.MeshStandardMaterial({ color: '#fef08a', roughness: 0.7 }));
+    poolDeck.position.set(0, 0.15, -14);
+    poolDeck.receiveShadow = true;
+    group.add(poolDeck);
+
+    // Turquoise Clear Wave Pool Water
+    const poolWater = new THREE.Mesh(
+      new THREE.PlaneGeometry(13, 9),
+      new THREE.MeshStandardMaterial({
+        color: '#06b6d4',
+        emissive: '#0891b2',
+        emissiveIntensity: 0.2,
+        roughness: 0.05,
+        metalness: 0.9,
+        transparent: true,
+        opacity: 0.85
+      })
+    );
+    poolWater.rotation.x = -Math.PI / 2;
+    poolWater.position.set(0, 0.28, -14);
+    group.add(poolWater);
+
+    // Floating Red Donut Lifebuoy in Pool
+    const lifeRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.0, 0.35, 10, 20),
+      new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.2 })
+    );
+    lifeRing.rotation.x = Math.PI / 2;
+    lifeRing.position.set(-2.5, 0.35, -14);
+    group.add(lifeRing);
+
+    // Deck Chair & Striped Sun Umbrella
+    const lounger = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 2.4), winFrameMat);
+    lounger.position.set(5.5, 0.25, -14);
+    const umbPole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), concreteMat);
+    umbPole.position.set(5.5, 1.6, -11.5);
+    const umbTop = new THREE.Mesh(new THREE.ConeGeometry(2.2, 0.9, 10), new THREE.MeshStandardMaterial({ color: '#f59e0b', roughness: 0.4 }));
+    umbTop.position.set(5.5, 3.1, -11.5);
+    group.add(lounger, umbPole, umbTop);
+
+    // BBQ Grill with Glowing Charcoal
+    const bbqBowl = new THREE.Mesh(new THREE.SphereGeometry(0.65, 10, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.4 }));
+    bbqBowl.rotation.x = Math.PI;
+    bbqBowl.position.set(-5.5, 1.1, -17.5);
+    const bbqCoals = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.08, 10), new THREE.MeshStandardMaterial({ color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 3.0 }));
+    bbqCoals.position.set(-5.5, 1.15, -17.5);
+    const bbqLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 6), new THREE.MeshStandardMaterial({ color: '#18181b' }));
+    bbqLeg.position.set(-5.5, 0.55, -17.5);
+    group.add(bbqBowl, bbqCoals, bbqLeg);
+
+    return group;
+  }
+
+  // --- 3. DUDE BURGER FAST FOOD (WITH 360 ROTATING BURGER) ---
+  buildDudeBurgerMesh(actor) {
+    const group = new THREE.Group();
+
+    // Fast Food Building Box
+    const shopGeom = new THREE.BoxGeometry(20, 8, 16);
+    const shopMat = new THREE.MeshStandardMaterial({ color: '#f97316', roughness: 0.5, metalness: 0.1 });
+    const shop = new THREE.Mesh(shopGeom, shopMat);
+    shop.position.y = 4.0;
+    shop.castShadow = true;
+    shop.receiveShadow = true;
+    group.add(shop);
+
+    // Drive-thru Awning with Red/White Stripes
+    const awning = new THREE.Mesh(new THREE.BoxGeometry(6.5, 0.25, 3.2), new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.3 }));
+    awning.position.set(-10.1, 4.8, 0);
+    awning.rotation.z = 0.25;
+    group.add(awning);
+
+    // Neon Signboard ("★ DUDE BURGER ★")
+    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(14, 2.6, 0.6), new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.4 }));
+    signBoard.position.set(0, 7.2, 8.3);
+    group.add(signBoard);
+
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 128;
+    const sctx = signCanvas.getContext('2d');
+    sctx.fillStyle = '#1e1b4b';
+    sctx.fillRect(0, 0, 512, 128);
+    sctx.strokeStyle = '#facc15';
+    sctx.lineWidth = 6;
+    sctx.strokeRect(8, 8, 496, 112);
+    sctx.fillStyle = '#fbbf24';
+    sctx.font = 'bold 44px sans-serif';
+    sctx.textAlign = 'center';
+    sctx.textBaseline = 'middle';
+    sctx.fillText('🍔 DUDE BURGER 🍔', 256, 64);
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    const signSprite = new THREE.Mesh(
+      new THREE.PlaneGeometry(13.2, 2.2),
+      new THREE.MeshStandardMaterial({ map: signTex, emissiveMap: signTex, emissive: '#facc15', emissiveIntensity: 1.2 })
+    );
+    signSprite.position.set(0, 7.2, 8.65);
+    group.add(signSprite);
+
+    // --- GIANT 3D ROTATING MASCOT HAMBURGER ON ROOF ---
+    const burgerGroup = new THREE.Group();
+    burgerGroup.position.set(0, 11.2, 0);
+
+    const bunMat = new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.45, metalness: 0.1 });
+    const meatMat = new THREE.MeshStandardMaterial({ color: '#451a03', roughness: 0.7, metalness: 0.1 });
+    const cheeseMat = new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.25, metalness: 0.2 });
+    const tomatoMat = new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.3, metalness: 0.1 });
+    const lettuceMat = new THREE.MeshStandardMaterial({ color: '#22c55e', roughness: 0.5, metalness: 0.1 });
+
+    // Bottom Bun
+    const bunBottom = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 3.8, 1.1, 18), bunMat);
+    bunBottom.position.y = -0.5;
+    burgerGroup.add(bunBottom);
+
+    // Beef Patty
+    const meat = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 0.9, 18), meatMat);
+    meat.position.y = 0.3;
+    burgerGroup.add(meat);
+
+    // Melted Cheddar Cheese
+    const cheese = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.25, 7.2), cheeseMat);
+    cheese.rotation.y = Math.PI / 4;
+    cheese.position.y = 0.8;
+    burgerGroup.add(cheese);
+
+    // Tomato & Lettuce
+    const tomato = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 0.3, 16), tomatoMat);
+    tomato.position.y = 1.05;
+    burgerGroup.add(tomato);
+
+    const lettuce = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.2, 16), lettuceMat);
+    lettuce.position.y = 1.25;
+    burgerGroup.add(lettuce);
+
+    // Top Bun with White Sesame Seeds
+    const bunTop = new THREE.Mesh(new THREE.SphereGeometry(4.3, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), bunMat);
+    bunTop.position.y = 1.35;
+    burgerGroup.add(bunTop);
+
+    const sesMat = new THREE.MeshStandardMaterial({ color: '#fef9c3', roughness: 0.3 });
+    for (let s = 0; s < 18; s++) {
+      const ses = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.25), sesMat);
+      const theta = (s / 18) * Math.PI * 2 + Math.random() * 0.2;
+      const rad = 1.5 + Math.random() * 2.2;
+      ses.position.set(Math.cos(theta) * rad, 3.2 - (rad * 0.28), Math.sin(theta) * rad);
+      ses.rotation.y = theta;
+      burgerGroup.add(ses);
+    }
+
+    group.add(burgerGroup);
+    this.animatedDudeProps.push({ type: 'burger', mesh: burgerGroup, group, actor });
+
+    return group;
+  }
+
+  // --- 4. POLICE STATION HQ (WITH FLASHING SIRENS) ---
+  buildPoliceStationMesh(actor) {
+    const group = new THREE.Group();
+
+    // Main Police HQ building
+    const bldMat = new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.4, metalness: 0.4 });
+    const trimMat = new THREE.MeshStandardMaterial({ color: '#38bdf8', roughness: 0.3, metalness: 0.3 });
+    const bld = new THREE.Mesh(new THREE.BoxGeometry(24, 12, 18), bldMat);
+    bld.position.y = 6.0;
+    bld.castShadow = true;
+    bld.receiveShadow = true;
+    group.add(bld);
+
+    // Front Entrance Canopy & Steps
+    const entrance = new THREE.Mesh(new THREE.BoxGeometry(8, 0.35, 3.5), trimMat);
+    entrance.position.set(0, 4.2, 9.8);
+    const step = new THREE.Mesh(new THREE.BoxGeometry(8, 0.4, 2.5), new THREE.MeshStandardMaterial({ color: '#94a3b8' }));
+    step.position.set(0, 0.2, 9.8);
+    group.add(entrance, step);
+
+    // Police Badge Sign
+    const signMat = new THREE.MeshStandardMaterial({ color: '#38bdf8', emissive: '#0284c7', emissiveIntensity: 1.5 });
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(10, 1.8, 0.4), signMat);
+    sign.position.set(0, 8.5, 9.2);
+    group.add(sign);
+
+    // Communications Mast on Roof
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.15, 8.0, 8), new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.8 }));
+    mast.position.set(8, 16.0, -4);
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshStandardMaterial({ color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 4.0 }));
+    beacon.position.set(8, 20.0, -4);
+    group.add(mast, beacon);
+
+    // Rotating Police Siren Lights (Red & Blue)
+    const sirenGroup = new THREE.Group();
+    sirenGroup.position.set(-6, 12.6, 0);
+
+    const sirenRed = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.7, 12), new THREE.MeshStandardMaterial({ color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 4.5 }));
+    sirenRed.position.x = -1.0;
+    const sirenBlue = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.7, 12), new THREE.MeshStandardMaterial({ color: '#3b82f6', emissive: '#3b82f6', emissiveIntensity: 4.5 }));
+    sirenBlue.position.x = 1.0;
+    sirenGroup.add(sirenRed, sirenBlue);
+    group.add(sirenGroup);
+
+    this.animatedDudeProps.push({ type: 'police_siren', mesh: sirenGroup, group, actor });
+
+    return group;
+  }
+
+  // --- 5. AIRPORT RUNWAY & CONTROL TOWER ---
+  buildAirportRunwayMesh(actor) {
+    const group = new THREE.Group();
+
+    // 220m Runway Deck
+    const runwayGeom = new THREE.BoxGeometry(34, 0.25, 220);
+    const runwayMat = new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.7, metalness: 0.2 });
+    const runway = new THREE.Mesh(runwayGeom, runwayMat);
+    runway.position.y = 0.12;
+    runway.receiveShadow = true;
+    group.add(runway);
+
+    // Centerline Stripes
+    const stripeMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.4 });
+    for (let rz = -90; rz <= 90; rz += 22) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.05, 12), stripeMat);
+      stripe.position.set(0, 0.26, rz);
+      group.add(stripe);
+    }
+
+    // Touchdown Threshold Bars
+    [-100, 100].forEach(pz => {
+      for (let px = -12; px <= 12; px += 3) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.05, 10), stripeMat);
+        bar.position.set(px, 0.26, pz);
+        group.add(bar);
+      }
+    });
+
+    // Control Tower (Tower shaft + 360 glass cab)
+    const towerShaft = new THREE.Mesh(new THREE.CylinderGeometry(4.0, 5.0, 24, 16), new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.6 }));
+    towerShaft.position.set(28, 12, 0);
+    towerShaft.castShadow = true;
+    group.add(towerShaft);
+
+    const cabGlass = new THREE.Mesh(new THREE.CylinderGeometry(6.2, 5.2, 4.5, 16), new THREE.MeshStandardMaterial({ color: '#0284c7', roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.8 }));
+    cabGlass.position.set(28, 25.5, 0);
+    const cabRoof = new THREE.Mesh(new THREE.ConeGeometry(7.0, 2.5, 16), new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.4 }));
+    cabRoof.position.set(28, 28.5, 0);
+    group.add(cabGlass, cabRoof);
+
+    return group;
+  }
+
+  // --- 6. STUNT BIPLANE (FLYABLE AIRPLANE) ---
+  buildStuntBiplaneMesh(actor) {
+    const group = new THREE.Group();
+    group.isVehicleGroup = true;
+
+    const yellowMat = new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.35, metalness: 0.3 });
+    const redMat = new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.4, metalness: 0.2 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.1, metalness: 0.9 });
+    const chromeMat = new THREE.MeshStandardMaterial({ color: '#f1f5f9', roughness: 0.1, metalness: 0.95 });
+
+    // Aerodynamic Fuselage
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.6, 6.2), yellowMat);
+    body.position.y = 1.6;
+    body.castShadow = true;
+    group.add(body);
+
+    // Open Cockpit with Windscreen
+    const cockpit = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 1.8), darkMat);
+    cockpit.position.set(0, 2.65, 0.4);
+    group.add(cockpit);
+
+    // Double Wings (Biplane Stunt Configuration)
+    const wingLower = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.18, 2.0), redMat);
+    wingLower.position.set(0, 1.2, 0.8);
+    wingLower.castShadow = true;
+    group.add(wingLower);
+
+    const wingUpper = new THREE.Mesh(new THREE.BoxGeometry(11.0, 0.18, 2.0), redMat);
+    wingUpper.position.set(0, 2.9, 0.8);
+    wingUpper.castShadow = true;
+    group.add(wingUpper);
+
+    // Vertical Struts
+    [-4.2, 4.2].forEach(sx => {
+      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.7, 6), darkMat);
+      strut.position.set(sx, 2.05, 0.8);
+      group.add(strut);
+    });
+
+    // Vertical Tail & Horizontal Stabilizer
+    const vTail = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.8, 1.6), redMat);
+    vTail.position.set(0, 2.45, -2.8);
+    const hTail = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.15, 1.2), redMat);
+    hTail.position.set(0, 1.75, -2.8);
+    group.add(vTail, hTail);
+
+    // Nose Cone Spinner & Spinning Propeller
+    const propHub = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 10), chromeMat);
+    propHub.position.set(0, 1.6, 3.2);
+    group.add(propHub);
+
+    const propMesh = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.25, 0.08), darkMat);
+    propMesh.position.set(0, 1.6, 3.25);
+    group.add(propMesh);
+
+    actor._runtime.propeller = propMesh;
+    this.animatedDudeProps.push({ type: 'propeller', mesh: propMesh, speed: 35.0, group, actor });
+
+    // Landing Gear (3 Wheels)
+    const tireMat = new THREE.MeshStandardMaterial({ color: '#161616', roughness: 0.8 });
+    [[-1.1, 0.45, 1.2], [1.1, 0.45, 1.2], [0, 0.35, -2.4]].forEach(gp => {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.28, 14), tireMat);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(gp[0], gp[1], gp[2]);
+      wheel.castShadow = true;
+      group.add(wheel);
+    });
+
+    return group;
+  }
+
+  // --- 7. SOCCER STADIUM & GIANT SOCCER BALL ---
+  buildSoccerStadiumMesh(actor) {
+    const group = new THREE.Group();
+
+    // Turf Pitch with alternating grass stripes
+    const pitch = new THREE.Mesh(
+      new THREE.BoxGeometry(45, 0.2, 65),
+      new THREE.MeshStandardMaterial({ color: '#22c55e', roughness: 0.85 })
+    );
+    pitch.position.y = 0.1;
+    pitch.receiveShadow = true;
+    group.add(pitch);
+
+    // White Markings
+    const lineMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.4 });
+    const centerCircle = new THREE.Mesh(new THREE.RingGeometry(5.0, 5.3, 24), lineMat);
+    centerCircle.rotation.x = -Math.PI / 2;
+    centerCircle.position.set(0, 0.22, 0);
+    group.add(centerCircle);
+
+    // Two White Goalposts
+    [-30, 30].forEach(gz => {
+      const goalGroup = new THREE.Group();
+      goalGroup.position.set(0, 0, gz);
+      const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.2, 8), lineMat);
+      postL.position.set(-4.0, 1.6, 0);
+      const postR = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.2, 8), lineMat);
+      postR.position.set(4.0, 1.6, 0);
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(8.16, 0.16, 0.16), lineMat);
+      bar.position.set(0, 3.2, 0);
+      goalGroup.add(postL, postR, bar);
+      group.add(goalGroup);
+    });
+
+    // 4 Corner Stadium Floodlight Towers
+    [[-24, -34], [24, -34], [-24, 34], [24, 34]].forEach(([fx, fz]) => {
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.45, 18, 8), new THREE.MeshStandardMaterial({ color: '#64748b', metalness: 0.8 }));
+      mast.position.set(fx, 9, fz);
+      const lampHead = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.8, 0.6), new THREE.MeshStandardMaterial({ color: '#fef08a', emissive: '#fef08a', emissiveIntensity: 2.0 }));
+      lampHead.position.set(fx, 18, fz);
+      group.add(mast, lampHead);
+    });
+
+    return group;
+  }
+
+  buildSoccerBallMesh(actor) {
+    const group = new THREE.Group();
+    const radius = actor.dimensions?.radius || 1.4;
+
+    const ballCanvas = document.createElement('canvas');
+    ballCanvas.width = 256;
+    ballCanvas.height = 128;
+    const bctx = ballCanvas.getContext('2d');
+    bctx.fillStyle = '#ffffff';
+    bctx.fillRect(0, 0, 256, 128);
+    bctx.fillStyle = '#18181b';
+    for (let bx = 16; bx < 256; bx += 48) {
+      for (let by = 16; by < 128; by += 48) {
+        bctx.beginPath();
+        bctx.arc(bx, by, 12, 0, Math.PI * 2);
+        bctx.fill();
+      }
+    }
+    const ballTex = new THREE.CanvasTexture(ballCanvas);
+
+    const ball = new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 20, 20),
+      new THREE.MeshStandardMaterial({ map: ballTex, roughness: 0.35, metalness: 0.1 })
+    );
+    ball.castShadow = true;
+    group.add(ball);
+    return group;
+  }
+
+  // --- 8. MEGA STUNT RAMP (SKATE PARK) ---
+  buildSkateRampMesh(actor) {
+    const group = new THREE.Group();
+    const w = actor.dimensions?.width || 14;
+    const h = actor.dimensions?.height || 7.5;
+    const d = actor.dimensions?.depth || 22;
+
+    const rampMat = new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.4, metalness: 0.3 });
+
+    // Curved Launch Profile
+    const rampGeom = new THREE.BoxGeometry(w, 0.4, d);
+    rampGeom.rotateX(0.32);
+    const rampMesh = new THREE.Mesh(rampGeom, rampMat);
+    rampMesh.position.set(0, h * 0.45, 0);
+    rampMesh.castShadow = true;
+    rampMesh.receiveShadow = true;
+    group.add(rampMesh);
+
+    // Guardrails
+    const railMat = new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.8 });
+    [-w / 2, w / 2].forEach(rx => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.2, d), railMat);
+      rail.position.set(rx, h * 0.45 + 0.6, 0);
+      rail.rotateX(0.32);
+      group.add(rail);
+    });
+
+    return group;
+  }
+
+  // --- 9. HIGH-BOUNCE TRAMPOLINE ---
+  buildTrampolineMesh(actor) {
+    const group = new THREE.Group();
+    const rad = actor.dimensions?.radius || 2.2;
+
+    const rim = new THREE.Mesh(
+      new THREE.TorusGeometry(rad, 0.22, 10, 24),
+      new THREE.MeshStandardMaterial({ color: '#22c55e', roughness: 0.4 })
+    );
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = 0.8;
+    group.add(rim);
+
+    const mat = new THREE.Mesh(
+      new THREE.CylinderGeometry(rad * 0.95, rad * 0.95, 0.05, 24),
+      new THREE.MeshStandardMaterial({ color: '#090d16', roughness: 0.85 })
+    );
+    mat.position.y = 0.8;
+    mat.receiveShadow = true;
+    group.add(mat);
+
+    const legMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.8 });
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.8, 8), legMat);
+      leg.position.set(Math.cos(ang) * (rad - 0.2), 0.4, Math.sin(ang) * (rad - 0.2));
+      group.add(leg);
+    }
+
+    return group;
+  }
+
+  // --- 10. OCTAN GAS STATION ---
+  buildGasStationMesh(actor) {
+    const group = new THREE.Group();
+    const canopy = new THREE.Mesh(
+      new THREE.BoxGeometry(18, 0.6, 14),
+      new THREE.MeshStandardMaterial({ color: '#ef4444', roughness: 0.3 })
+    );
+    canopy.position.y = 5.8;
+    canopy.castShadow = true;
+    group.add(canopy);
+
+    const pMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.4 });
+    [[-6, -4], [6, -4], [-6, 4], [6, 4]].forEach(([px, pz]) => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5.8, 12), pMat);
+      p.position.set(px, 2.9, pz);
+      group.add(p);
+    });
+
+    [-3.5, 3.5].forEach(gx => {
+      const pump = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.2, 0.9), new THREE.MeshStandardMaterial({ color: '#0284c7', roughness: 0.3 }));
+      pump.position.set(gx, 1.1, 0);
+      group.add(pump);
+    });
+
+    return group;
+  }
+
+  // --- 11. AMMU-NATION GUN SHOP ---
+  buildGunShopMesh(actor) {
+    const group = new THREE.Group();
+    const shop = new THREE.Mesh(
+      new THREE.BoxGeometry(16, 7, 14),
+      new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.5, metalness: 0.6 })
+    );
+    shop.position.y = 3.5;
+    shop.castShadow = true;
+    group.add(shop);
+
+    const sign = new THREE.Mesh(
+      new THREE.BoxGeometry(12, 1.8, 0.3),
+      new THREE.MeshStandardMaterial({ color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 2.2 })
+    );
+    sign.position.set(0, 5.8, 7.15);
+    group.add(sign);
 
     return group;
   }
@@ -2290,10 +3017,11 @@ class Renderer3D {
       this.meshMap.delete(actor);
       actor._runtime.threeMesh = null;
 
-      // Clean up GTA 6 dynamic simulation meshes
+      // Clean up GTA 6 & Dude dynamic simulation meshes
       this.animatedOceans = this.animatedOceans.filter(m => m !== mesh);
       this.animatedPalms = this.animatedPalms.filter(m => m !== mesh);
       this.animatedVehicles = this.animatedVehicles.filter(v => v.group !== mesh && v.actor !== actor);
+      this.animatedDudeProps = this.animatedDudeProps.filter(p => p.group !== mesh && p.actor !== actor);
     }
   }
 
@@ -2386,6 +3114,21 @@ class Renderer3D {
             const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             v.rig.badgeSprite.visible = dist < 4.5;
           }
+        }
+      }
+    }
+
+    // Animate Dude Theft Wars Props (Rotating Giant Burger, Airplane Propeller, Police Sirens)
+    if (this.animatedDudeProps && this.animatedDudeProps.length > 0) {
+      for (const prop of this.animatedDudeProps) {
+        if (prop.type === 'burger' && prop.mesh) {
+          prop.mesh.rotation.y += dt * 0.85;
+        } else if (prop.type === 'propeller' && prop.mesh) {
+          prop.mesh.rotation.z += dt * (prop.speed || 32.0);
+        } else if (prop.type === 'police_siren' && prop.mesh) {
+          prop.mesh.rotation.y += dt * 8.5;
+        } else if (prop.type === 'water_ripple' && prop.mesh) {
+          prop.mesh.rotation.z = Math.sin(performance.now() * 0.002) * 0.05;
         }
       }
     }
