@@ -45,7 +45,7 @@ const EngineTemplates3D = {
           shape: 'plane',
           dimensions: { width: 40, depth: 200 },
           transform: { position: { x: -28, y: -0.05, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
-          material: { color: '#fef08a', metalness: 0.1, roughness: 0.9 },
+          material: { color: '#c29b68', metalness: 0.05, roughness: 0.95 },
           physics: { enabled: true, type: 'static' }
         },
 
@@ -83,7 +83,7 @@ const EngineTemplates3D = {
           tag: 'vehicle',
           shape: 'vehicle',
           dimensions: { width: 2.2, height: 1.2, depth: 4.6 },
-          transform: { position: { x: 3.5, y: 0.1, z: 8.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          transform: { position: { x: 2.4, y: 0.1, z: 2.2 }, rotation: { x: 0, y: 12, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
           material: {
             color: '#00d2ff',
             metalness: 0.96,
@@ -167,7 +167,7 @@ const EngineTemplates3D = {
           shape: 'building',
           dimensions: { width: 14, height: 18, depth: 12 },
           transform: { position: { x: 19.0, y: 0, z: -25 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
-          material: { color: '#fb7185', metalness: 0.2, roughness: 0.5 },
+          material: { color: '#e11d48', metalness: 0.15, roughness: 0.6 },
           physics: { enabled: true, type: 'static' }
         },
         {
@@ -176,7 +176,7 @@ const EngineTemplates3D = {
           shape: 'building',
           dimensions: { width: 16, height: 22, depth: 12 },
           transform: { position: { x: 19.0, y: 0, z: 10 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
-          material: { color: '#38bdf8', metalness: 0.2, roughness: 0.5 },
+          material: { color: '#0284c7', metalness: 0.15, roughness: 0.6 },
           physics: { enabled: true, type: 'static' }
         },
         {
@@ -185,7 +185,7 @@ const EngineTemplates3D = {
           shape: 'building',
           dimensions: { width: 14, height: 16, depth: 12 },
           transform: { position: { x: 19.0, y: 0, z: 45 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
-          material: { color: '#f472b6', metalness: 0.2, roughness: 0.5 },
+          material: { color: '#db2777', metalness: 0.15, roughness: 0.6 },
           physics: { enabled: true, type: 'static' }
         },
 

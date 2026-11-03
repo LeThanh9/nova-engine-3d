@@ -49,8 +49,8 @@ class Renderer3D {
   initScene() {
     // 1. Scene & Unreal Atmospheric Fog
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color('#0a0d17');
-    this.scene.fog = new THREE.FogExp2('#0a0d17', 0.010);
+    this.scene.background = new THREE.Color('#140b20');
+    this.scene.fog = new THREE.FogExp2('#140b20', 0.0035);
 
     // 2. Camera Setup (UE4 Field of View & Cinematic Angle)
     const aspect = this.canvas.clientWidth / this.canvas.clientHeight || 16 / 9;
@@ -66,7 +66,7 @@ class Renderer3D {
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight, false);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -105,9 +105,9 @@ class Renderer3D {
       // UE4-grade bloom settings: elegant neon glow with crisp threshold
       this.bloomPass = new THREE.UnrealBloomPass(
         new THREE.Vector2(width, height),
-        0.8,  // strength
-        0.4,  // radius
-        0.7   // threshold (only bright neon & glowing cores radiate bloom)
+        0.72,  // strength
+        0.38,  // radius
+        0.82   // threshold (only bright neon & glowing cores radiate bloom, keeping asphalt dark & rich)
       );
 
       this.composer = new THREE.EffectComposer(this.renderer);
@@ -345,7 +345,10 @@ class Renderer3D {
     hotelCtx.fillText('★ HOTEL VICE ★', 256, 31);
 
     const hotelTex = new THREE.CanvasTexture(hotelCanvas);
+    hotelTex.wrapS = THREE.RepeatWrapping;
+    hotelTex.wrapT = THREE.RepeatWrapping;
     this.textures['hotel_facade'] = hotelTex;
+    this.textures['hotel_facade_normal'] = this.generateNormalMapFromCanvas(hotelCanvas, 1.6);
   }
 
   // Generates real tangent-space Normal Maps from any 2D canvas height/color map!
@@ -468,56 +471,61 @@ class Renderer3D {
   }
 
   setupAtmosphere() {
-    // 1. Unreal Engine Atmospheric Sky Dome (Rayleigh Sunset & Cosmic Nebula)
-    const skyGeom = new THREE.SphereGeometry(360, 32, 24);
+    // 1. Unreal Engine Atmospheric Sky Dome (Miami Vice Rayleigh Sunset & City Skyline)
+    const skyGeom = new THREE.SphereGeometry(380, 32, 24);
     const skyCanvas = document.createElement('canvas');
     skyCanvas.width = 1024;
     skyCanvas.height = 512;
     const sctx = skyCanvas.getContext('2d');
 
-    // Multi-stop Atmospheric Rayleigh Gradient (Zenith deep space -> Twilight sunset)
+    // Multi-stop Atmospheric Sunset Gradient (Zenith deep violet-indigo -> Horizon fiery golden amber)
     const skyGrad = sctx.createLinearGradient(0, 0, 0, 512);
-    skyGrad.addColorStop(0.0, '#020409'); // Deep Space Zenith
-    skyGrad.addColorStop(0.38, '#08142b'); // High Altitude Midnight Blue
-    skyGrad.addColorStop(0.48, '#1e293b'); // Upper Atmospheric Haze
-    skyGrad.addColorStop(0.50, '#38bdf8'); // Electric Cyan Horizon Rim
-    skyGrad.addColorStop(0.52, '#f97316'); // Warm Twilight Sunset Line
-    skyGrad.addColorStop(0.56, '#0f172a'); // Ground Horizon
-    skyGrad.addColorStop(1.0, '#020617'); // Nadir
+    skyGrad.addColorStop(0.0, '#090414');  // Deep Midnight Zenith
+    skyGrad.addColorStop(0.28, '#1e103d'); // High Altitude Violet Indigo
+    skyGrad.addColorStop(0.42, '#581c87'); // Atmospheric Purple Haze
+    skyGrad.addColorStop(0.50, '#9d174d'); // Sunset Crimson Magenta
+    skyGrad.addColorStop(0.56, '#ea580c'); // Fiery Twilight Orange
+    skyGrad.addColorStop(0.62, '#f59e0b'); // Golden Sunset Horizon
+    skyGrad.addColorStop(0.70, '#1c1917'); // Dark Sea Horizon
+    skyGrad.addColorStop(1.0, '#0c0a09');  // Nadir
     sctx.fillStyle = skyGrad;
     sctx.fillRect(0, 0, 1024, 512);
 
-    // Glowing Sun Disc with Atmospheric Corona Flare
-    const sunGrad = sctx.createRadialGradient(680, 190, 0, 680, 190, 110);
+    // Glowing Golden Setting Sun Disc with Soft Atmospheric Corona
+    const sunGrad = sctx.createRadialGradient(640, 265, 0, 640, 265, 95);
     sunGrad.addColorStop(0, '#ffffff');
-    sunGrad.addColorStop(0.15, '#fff7ed');
-    sunGrad.addColorStop(0.45, 'rgba(249, 115, 22, 0.45)');
-    sunGrad.addColorStop(0.75, 'rgba(56, 189, 248, 0.2)');
+    sunGrad.addColorStop(0.2, '#fef08a');
+    sunGrad.addColorStop(0.5, 'rgba(249, 115, 22, 0.45)');
+    sunGrad.addColorStop(0.8, 'rgba(168, 85, 247, 0.2)');
     sunGrad.addColorStop(1.0, 'rgba(0,0,0,0)');
     sctx.fillStyle = sunGrad;
     sctx.beginPath();
-    sctx.arc(680, 190, 110, 0, Math.PI * 2);
+    sctx.arc(640, 265, 95, 0, Math.PI * 2);
     sctx.fill();
 
-    // Distant Cyber City Skyline & Mountain Silhouettes on Horizon
-    sctx.fillStyle = '#060a12';
-    sctx.beginPath();
-    sctx.moveTo(0, 280);
-    for (let x = 0; x <= 1024; x += 16) {
-      const h = Math.sin(x * 0.02) * 12 + Math.sin(x * 0.05) * 8 + Math.sin(x * 0.1) * 6;
-      sctx.lineTo(x, 268 - h);
+    // Distant Vice City Skyscraper Skyline Silhouettes on Horizon
+    sctx.fillStyle = '#0a0614';
+    for (let bx = 0; bx < 1024; bx += 24) {
+      const bHeight = 25 + Math.sin(bx * 0.05) * 18 + Math.cos(bx * 0.12) * 12;
+      const bWidth = 16 + (bx % 3) * 6;
+      sctx.fillRect(bx, 290 - bHeight, bWidth, bHeight);
+
+      // Sparkling window grids on distant skyscrapers
+      sctx.fillStyle = 'rgba(254, 240, 138, 0.65)';
+      for (let wy = 290 - bHeight + 4; wy < 288; wy += 5) {
+        for (let wx = bx + 3; wx < bx + bWidth - 3; wx += 4) {
+          if (Math.random() > 0.4) {
+            sctx.fillRect(wx, wy, 2, 2.5);
+          }
+        }
+      }
+      sctx.fillStyle = '#0a0614';
     }
-    sctx.lineTo(1024, 310);
-    sctx.lineTo(0, 310);
-    sctx.closePath();
-    sctx.fill();
 
-    // Blinking Cyber Beacons on Mountain Peaks
+    // Blinking Red Aviation Safety Beacons on Tower Spires
     sctx.fillStyle = '#ef4444';
-    for (let bx = 60; bx < 1024; bx += 140) {
-      sctx.beginPath();
-      sctx.arc(bx, 245, 1.8, 0, Math.PI * 2);
-      sctx.fill();
+    for (let bx = 40; bx < 1024; bx += 96) {
+      sctx.fillRect(bx, 255, 3, 3);
     }
 
     const skyTex = new THREE.CanvasTexture(skyCanvas);
@@ -529,25 +537,25 @@ class Renderer3D {
     this.skyDome = new THREE.Mesh(skyGeom, skyMat);
     this.scene.add(this.skyDome);
 
-    // 2. Volumetric Sun Light Shafts (God Rays)
-    const shaftGeom = new THREE.ConeGeometry(22, 70, 32, 1, true);
-    shaftGeom.translate(0, -35, 0);
+    // 2. Subtle Volumetric Sun Light Shaft (Balanced Opacity, No Screen Washout)
+    const shaftGeom = new THREE.ConeGeometry(24, 75, 32, 1, true);
+    shaftGeom.translate(0, -37.5, 0);
     shaftGeom.rotateX(Math.PI / 2);
     const shaftMat = new THREE.MeshBasicMaterial({
-      color: '#fff5ea',
+      color: '#ffedd5',
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.025, // Soft cinematic sun beam
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
       depthWrite: false
     });
     this.godRayCone = new THREE.Mesh(shaftGeom, shaftMat);
-    this.godRayCone.position.set(25, 48, 30);
-    this.godRayCone.lookAt(0, 3.5, -4);
+    this.godRayCone.position.set(28, 22, -60);
+    this.godRayCone.lookAt(0, 2.0, 10);
     this.scene.add(this.godRayCone);
 
-    // 3. Background Cosmic Stars
-    const starCount = 350;
+    // 3. Subtle Atmospheric Stars in Twilight Sky
+    const starCount = 200;
     const starGeom = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
@@ -557,15 +565,14 @@ class Renderer3D {
       const v = Math.random();
       const theta = u * 2.0 * Math.PI;
       const phi = Math.acos(2.0 * v - 1.0);
-      const r = 240 + Math.random() * 50;
+      const r = 260 + Math.random() * 40;
 
       starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      starPos[i * 3 + 1] = Math.abs(r * Math.sin(phi) * Math.sin(theta)) + 12;
+      starPos[i * 3 + 1] = Math.abs(r * Math.sin(phi) * Math.sin(theta)) + 40;
       starPos[i * 3 + 2] = r * Math.cos(phi);
 
-      const isCyan = Math.random() > 0.6;
-      starColors[i * 3] = isCyan ? 0.0 : 1.0;
-      starColors[i * 3 + 1] = isCyan ? 0.9 : 0.8;
+      starColors[i * 3] = 1.0;
+      starColors[i * 3 + 1] = 0.9;
       starColors[i * 3 + 2] = 1.0;
     }
 
@@ -573,38 +580,43 @@ class Renderer3D {
     starGeom.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
 
     const starMat = new THREE.PointsMaterial({
-      size: 1.5,
+      size: 1.2,
       vertexColors: true,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.75,
+      fog: false
     });
-
     const stars = new THREE.Points(starGeom, starMat);
     this.scene.add(stars);
 
-    // 4. Unreal Engine Volumetric Dust Motes floating in the light
-    const moteCount = 150;
+    // 4. Volumetric Golden Atmospheric Dust Motes
+    const moteCount = 120;
     const moteGeom = new THREE.BufferGeometry();
     const motePos = new Float32Array(moteCount * 3);
     this.moteData = [];
 
     for (let i = 0; i < moteCount; i++) {
-      motePos[i * 3] = (Math.random() - 0.5) * 55;
-      motePos[i * 3 + 1] = Math.random() * 14 + 0.5;
-      motePos[i * 3 + 2] = (Math.random() - 0.5) * 55;
+      const mx = (Math.random() - 0.5) * 70;
+      const my = 0.5 + Math.random() * 12;
+      const mz = (Math.random() - 0.5) * 80;
+
+      motePos[i * 3] = mx;
+      motePos[i * 3 + 1] = my;
+      motePos[i * 3 + 2] = mz;
+
       this.moteData.push({
-        baseY: motePos[i * 3 + 1],
-        speed: 0.6 + Math.random() * 0.9,
+        baseY: my,
+        speed: 0.4 + Math.random() * 0.8,
         offset: Math.random() * Math.PI * 2
       });
     }
 
     moteGeom.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
     const moteMat = new THREE.PointsMaterial({
-      size: 0.45,
-      color: '#38bdf8',
+      size: 0.35,
+      color: '#facc15',
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.55,
       blending: THREE.AdditiveBlending
     });
     this.motePoints = new THREE.Points(moteGeom, moteMat);
@@ -612,20 +624,20 @@ class Renderer3D {
   }
 
   setupLighting() {
-    // 1. Hemisphere Light (Sky: Soft Electric Cyan Blue, Ground: Charcoal Slate)
-    this.hemiLight = new THREE.HemisphereLight('#60a5fa', '#090d16', 0.75);
+    // 1. Hemisphere Light (Sky: Soft Sunset Violet, Ground: Warm Earth Amber)
+    this.hemiLight = new THREE.HemisphereLight('#c084fc', '#271206', 0.55);
     this.scene.add(this.hemiLight);
 
-    // 2. Primary Directional Sunlight (Warm Amber Golden Sunlight with Soft Cascaded Shadows)
-    this.dirLight = new THREE.DirectionalLight('#fff5ea', 2.2);
-    this.dirLight.position.set(25, 48, 30);
+    // 2. Primary Directional Sunlight (Warm Golden Dusk Sunlight with Soft Cascaded Shadows)
+    this.dirLight = new THREE.DirectionalLight('#ff9f43', 1.45);
+    this.dirLight.position.set(30, 35, 25);
     this.dirLight.castShadow = true;
 
     this.dirLight.shadow.mapSize.width = 2048;
     this.dirLight.shadow.mapSize.height = 2048;
     this.dirLight.shadow.camera.near = 1.0;
     this.dirLight.shadow.camera.far = 180;
-    const shadowD = 40;
+    const shadowD = 45;
     this.dirLight.shadow.camera.left = -shadowD;
     this.dirLight.shadow.camera.right = shadowD;
     this.dirLight.shadow.camera.top = shadowD;
@@ -634,13 +646,13 @@ class Renderer3D {
     this.scene.add(this.dirLight);
 
     // 3. Key Rim Light (Vivid Electric Cyan Backlight from rear left)
-    this.rimLight = new THREE.DirectionalLight('#00f0ff', 1.8);
-    this.rimLight.position.set(-24, 22, -26);
+    this.rimLight = new THREE.DirectionalLight('#00f0ff', 0.85);
+    this.rimLight.position.set(-24, 20, -26);
     this.scene.add(this.rimLight);
 
     // 4. Secondary Fill Rim Light (Vivid Neon Magenta Backlight from rear right)
-    this.rimLight2 = new THREE.DirectionalLight('#e879f9', 1.2);
-    this.rimLight2.position.set(24, 18, -26);
+    this.rimLight2 = new THREE.DirectionalLight('#e879f9', 0.5);
+    this.rimLight2.position.set(24, 16, -26);
     this.scene.add(this.rimLight2);
   }
 
@@ -1051,17 +1063,17 @@ class Renderer3D {
     // Body Armor Material (Dark Metallic Titanium with specular sheen)
     const armorMat = new THREE.MeshStandardMaterial({
       color: '#1e293b',
-      metalness: 0.9,
-      roughness: 0.18
+      metalness: 0.8,
+      roughness: 0.32
     });
 
     // Visor / Core Neon Emissive Material (Unreal Glowing Cyan)
     const neonMat = new THREE.MeshStandardMaterial({
       color: '#00f0ff',
       emissive: '#00f0ff',
-      emissiveIntensity: 3.2,
-      roughness: 0.08,
-      metalness: 0.4
+      emissiveIntensity: 0.85,
+      roughness: 0.12,
+      metalness: 0.2
     });
 
     // Joint Accents
@@ -1281,198 +1293,387 @@ class Renderer3D {
     return group;
   }
 
-  // GTA 6 High-Fidelity Supercar Mesh Builder (Pegassi / Grotti Supercar Rig)
+  // GTA 6 High-Fidelity AAA Supercar Mesh Builder (Pegassi / Grotti Supercar Rig)
   buildVehicleMesh(actor) {
     const group = new THREE.Group();
     group.isVehicleGroup = true;
     const bodyColor = actor.material?.color || '#00d2ff';
-    const metalness = actor.material?.metalness ?? 0.95;
-    const roughness = actor.material?.roughness ?? 0.12;
+    const metalness = actor.material?.metalness ?? 0.98;
+    const roughness = actor.material?.roughness ?? 0.08;
 
-    // Body Paint Material (Metallic Clearcoat Car Paint)
+    // 1. High-Gloss Metallic Clearcoat Automotive Paint
     const paintMat = new THREE.MeshStandardMaterial({
       color: bodyColor,
       metalness: metalness,
       roughness: roughness
     });
 
-    // Dark Carbon Fiber / Trim Material
+    // Dark Carbon Fiber Aero Trim
     const carbonMat = new THREE.MeshStandardMaterial({
-      color: '#090d14',
-      metalness: 0.8,
-      roughness: 0.3
+      color: '#0a0d14',
+      metalness: 0.85,
+      roughness: 0.25
     });
 
-    // Tinted Glass Material (Cockpit & Windshield)
+    // Dark Smoked Aerodynamic Glass
     const glassMat = new THREE.MeshStandardMaterial({
-      color: '#111827',
-      metalness: 0.9,
-      roughness: 0.05,
+      color: '#080d1a',
+      metalness: 0.95,
+      roughness: 0.02,
       transparent: true,
-      opacity: 0.72
+      opacity: 0.65
     });
 
-    // 1. Lower Aerodynamic Chassis / Floorpan
-    const chassisGeom = new THREE.BoxGeometry(2.1, 0.45, 4.4);
-    const chassis = new THREE.Mesh(chassisGeom, paintMat);
-    chassis.position.y = 0.45;
-    chassis.castShadow = true;
-    chassis.receiveShadow = true;
-    group.add(chassis);
+    // Chrome / Polished Aluminum
+    const chromeMat = new THREE.MeshStandardMaterial({
+      color: '#f1f5f9',
+      metalness: 0.98,
+      roughness: 0.05
+    });
 
-    // Front Sloped Nose / Hood
-    const hoodGeom = new THREE.BoxGeometry(1.95, 0.28, 1.4);
-    const hood = new THREE.Mesh(hoodGeom, paintMat);
-    hood.position.set(0, 0.52, 1.35);
-    hood.rotation.x = -0.12;
-    hood.castShadow = true;
-    group.add(hood);
+    // Interior Crimson Leather
+    const leatherMat = new THREE.MeshStandardMaterial({
+      color: '#991b1b',
+      roughness: 0.55,
+      metalness: 0.1
+    });
 
-    // Front Carbon Splitter
-    const splitterGeom = new THREE.BoxGeometry(2.15, 0.08, 0.6);
+    // --- A. AERODYNAMIC MAIN MONOCOQUE FUSELAGE ---
+    // Lower belly chassis
+    const bellyGeom = new THREE.BoxGeometry(2.1, 0.28, 4.5);
+    const belly = new THREE.Mesh(bellyGeom, carbonMat);
+    belly.position.y = 0.32;
+    belly.castShadow = true;
+    group.add(belly);
+
+    // Front Sloped Nose Wedge
+    const noseGeom = new THREE.CylinderGeometry(0.9, 1.05, 1.3, 16);
+    noseGeom.rotateX(Math.PI / 2);
+    const nose = new THREE.Mesh(noseGeom, paintMat);
+    nose.position.set(0, 0.46, 1.6);
+    nose.scale.set(1.0, 0.32, 1.0);
+    nose.castShadow = true;
+    group.add(nose);
+
+    // Front Low-Slung Carbon Splitter with Endplate Winglets
+    const splitterGeom = new THREE.BoxGeometry(2.2, 0.06, 0.8);
     const splitter = new THREE.Mesh(splitterGeom, carbonMat);
-    splitter.position.set(0, 0.25, 2.15);
+    splitter.position.set(0, 0.16, 2.2);
     group.add(splitter);
 
-    // 2. Aerodynamic Cockpit Cabin & Windshield
-    const cabinGeom = new THREE.BoxGeometry(1.65, 0.6, 2.1);
-    const cabin = new THREE.Mesh(cabinGeom, glassMat);
-    cabin.position.set(0, 0.92, -0.2);
-    cabin.castShadow = true;
-    group.add(cabin);
+    const wingletL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.4), carbonMat);
+    wingletL.position.set(-1.1, 0.25, 2.2);
+    const wingletR = wingletL.clone();
+    wingletR.position.x = 1.1;
+    group.add(wingletL, wingletR);
 
-    // Roof Panel
-    const roofGeom = new THREE.BoxGeometry(1.5, 0.06, 1.3);
-    const roof = new THREE.Mesh(roofGeom, paintMat);
-    roof.position.set(0, 1.24, -0.25);
-    roof.castShadow = true;
-    group.add(roof);
+    // Front Radiator Air Inlets (Dark Hex Grille)
+    const inletMat = new THREE.MeshBasicMaterial({ color: '#000000' });
+    const inletL = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.2, 0.2), inletMat);
+    inletL.position.set(-0.55, 0.32, 2.15);
+    const inletR = inletL.clone();
+    inletR.position.x = 0.55;
+    group.add(inletL, inletR);
 
-    // Rear Engine Cover Louvers / Fastback
-    const rearDeckGeom = new THREE.BoxGeometry(1.9, 0.35, 1.2);
-    const rearDeck = new THREE.Mesh(rearDeckGeom, carbonMat);
-    rearDeck.position.set(0, 0.68, -1.5);
-    rearDeck.castShadow = true;
-    group.add(rearDeck);
+    // Sculpted Hood Extractor Vents
+    const ventL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.04, 0.6), carbonMat);
+    ventL.position.set(-0.4, 0.56, 1.25);
+    ventL.rotation.x = -0.15;
+    const ventR = ventL.clone();
+    ventR.position.x = 0.4;
+    group.add(ventL, ventR);
 
-    // 3. High Downforce Rear GT Wing Spoiler
-    const wingGeom = new THREE.BoxGeometry(2.2, 0.06, 0.55);
+    // Front Muscular Wheel Arch Fenders
+    const fenderGeom = new THREE.BoxGeometry(0.38, 0.38, 1.4);
+    const fenderL = new THREE.Mesh(fenderGeom, paintMat);
+    fenderL.position.set(-0.95, 0.52, 1.35);
+    fenderL.castShadow = true;
+    const fenderR = fenderL.clone();
+    fenderR.position.x = 0.95;
+    group.add(fenderL, fenderR);
+
+    // Rear Muscular Haunches (Wide Supercar Hips)
+    const haunchGeom = new THREE.BoxGeometry(0.42, 0.48, 1.6);
+    const haunchL = new THREE.Mesh(haunchGeom, paintMat);
+    haunchL.position.set(-0.98, 0.58, -1.35);
+    haunchL.castShadow = true;
+    const haunchR = haunchL.clone();
+    haunchR.position.x = 0.98;
+    group.add(haunchL, haunchR);
+
+    // Sculpted Side Doors with Deep Radiator Air Intakes
+    const doorMidGeom = new THREE.BoxGeometry(1.68, 0.42, 1.6);
+    const doorMid = new THREE.Mesh(doorMidGeom, paintMat);
+    doorMid.position.set(0, 0.48, 0.0);
+    doorMid.castShadow = true;
+    group.add(doorMid);
+
+    const sideScoopL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.32, 0.6), carbonMat);
+    sideScoopL.position.set(-0.94, 0.48, -0.4);
+    const sideScoopR = sideScoopL.clone();
+    sideScoopR.position.x = 0.94;
+    group.add(sideScoopL, sideScoopR);
+
+    // Carbon Fiber Ground Effect Side Skirts
+    const skirtGeom = new THREE.BoxGeometry(2.18, 0.05, 1.8);
+    const skirt = new THREE.Mesh(skirtGeom, carbonMat);
+    skirt.position.set(0, 0.18, 0.0);
+    group.add(skirt);
+
+    // Aerodynamic Wing Mirrors on Slender Pylons
+    const mirrorGeom = new THREE.BoxGeometry(0.25, 0.12, 0.14);
+    const mirrorPylonGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.2, 8);
+    mirrorPylonGeom.rotateZ(0.4);
+
+    const mirrorL = new THREE.Group();
+    mirrorL.position.set(-0.95, 0.88, 0.6);
+    mirrorL.add(new THREE.Mesh(mirrorGeom, carbonMat));
+    mirrorL.add(new THREE.Mesh(mirrorPylonGeom, carbonMat));
+    const mirrorR = mirrorL.clone();
+    mirrorR.position.x = 0.95;
+    mirrorR.rotation.y = Math.PI;
+    group.add(mirrorL, mirrorR);
+
+    // --- B. CURVED COCKPIT GREENHOUSE & 3D INTERIOR ---
+    // Sloping Panoramic Glass Canopy
+    const canopyGeom = new THREE.CylinderGeometry(0.68, 0.88, 1.8, 16);
+    canopyGeom.rotateX(Math.PI / 2);
+    const canopyMesh = new THREE.Mesh(canopyGeom, glassMat);
+    canopyMesh.position.set(0, 0.88, 0.0);
+    canopyMesh.scale.set(1.0, 0.48, 1.0);
+    canopyMesh.castShadow = true;
+    group.add(canopyMesh);
+
+    // Slender Painted A/B/C Roof Arch
+    const roofArchGeom = new THREE.BoxGeometry(1.36, 0.06, 1.2);
+    const roofArch = new THREE.Mesh(roofArchGeom, paintMat);
+    roofArch.position.set(0, 1.12, -0.1);
+    group.add(roofArch);
+
+    // 3D Interior: 2 Racing Bucket Seats
+    const seatGeom = new THREE.BoxGeometry(0.42, 0.55, 0.45);
+    const headrestGeom = new THREE.BoxGeometry(0.24, 0.22, 0.16);
+    const seatL = new THREE.Group();
+    seatL.position.set(-0.35, 0.6, -0.05);
+    seatL.add(new THREE.Mesh(seatGeom, leatherMat));
+    const headL = new THREE.Mesh(headrestGeom, leatherMat);
+    headL.position.set(0, 0.38, -0.1);
+    seatL.add(headL);
+
+    const seatR = seatL.clone();
+    seatR.position.x = 0.35;
+    group.add(seatL, seatR);
+
+    // 3D Interior: Sports Steering Wheel & Dashboard Dial
+    const wheelTorus = new THREE.TorusGeometry(0.14, 0.024, 8, 20);
+    const steerWheel = new THREE.Mesh(wheelTorus, carbonMat);
+    steerWheel.position.set(-0.35, 0.82, 0.35);
+    steerWheel.rotation.x = -0.35;
+    group.add(steerWheel);
+
+    const dashDial = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.04), new THREE.MeshBasicMaterial({ color: '#00f0ff' }));
+    dashDial.position.set(-0.35, 0.82, 0.48);
+    group.add(dashDial);
+
+    // --- C. MID-ENGINE BAY & REAR FASCIA ---
+    // Transparent Smoked Glass Engine Cover
+    const engineCover = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.04, 1.1), glassMat);
+    engineCover.position.set(0, 0.86, -1.1);
+    group.add(engineCover);
+
+    // 3D V8 Twin-Turbo Engine Block visible underneath glass!
+    const engineBlockGeom = new THREE.BoxGeometry(0.8, 0.32, 0.8);
+    const engineBlock = new THREE.Mesh(engineBlockGeom, carbonMat);
+    engineBlock.position.set(0, 0.62, -1.1);
+    group.add(engineBlock);
+
+    // Red crinkle cylinder head covers
+    const headCoverGeom = new THREE.BoxGeometry(0.22, 0.12, 0.7);
+    const redHeadL = new THREE.Mesh(headCoverGeom, new THREE.MeshStandardMaterial({ color: '#b91c1c', roughness: 0.3 }));
+    redHeadL.position.set(-0.24, 0.76, -1.1);
+    const redHeadR = redHeadL.clone();
+    redHeadR.position.x = 0.24;
+    group.add(redHeadL, redHeadR);
+
+    // Chrome Dual Intake Plenum
+    const plenumGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.65, 12);
+    plenumGeom.rotateZ(Math.PI / 2);
+    const plenum = new THREE.Mesh(plenumGeom, chromeMat);
+    plenum.position.set(0, 0.82, -1.1);
+    group.add(plenum);
+
+    // Massive Carbon Fiber Rear Diffuser with 6 Aero Fins
+    const diffuserGeom = new THREE.BoxGeometry(2.0, 0.2, 0.6);
+    const diffuser = new THREE.Mesh(diffuserGeom, carbonMat);
+    diffuser.position.set(0, 0.24, -2.15);
+    group.add(diffuser);
+
+    for (let fin = -3; fin <= 3; fin++) {
+      if (fin === 0) continue;
+      const finMesh = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.22, 0.5), carbonMat);
+      finMesh.position.set(fin * 0.28, 0.22, -2.15);
+      group.add(finMesh);
+    }
+
+    // Quad Stainless Steel Exhaust Pipes with Blue Heat-Treated Titanium Rims
+    const exhMat = new THREE.MeshStandardMaterial({ color: '#38bdf8', metalness: 0.95, roughness: 0.1 });
+    const exhGeom = new THREE.CylinderGeometry(0.075, 0.075, 0.25, 16);
+    exhGeom.rotateX(Math.PI / 2);
+
+    const exh1 = new THREE.Mesh(exhGeom, exhMat);
+    exh1.position.set(-0.25, 0.42, -2.25);
+    const exh2 = new THREE.Mesh(exhGeom, exhMat);
+    exh2.position.set(-0.10, 0.42, -2.25);
+    const exh3 = new THREE.Mesh(exhGeom, exhMat);
+    exh3.position.set(0.10, 0.42, -2.25);
+    const exh4 = new THREE.Mesh(exhGeom, exhMat);
+    exh4.position.set(0.25, 0.42, -2.25);
+    group.add(exh1, exh2, exh3, exh4);
+
+    // Continuous Full-Width 3D LED Taillight Blade (GTA 6 Signature Light)
+    const tailMat = new THREE.MeshStandardMaterial({
+      color: '#ef4444',
+      emissive: '#ef4444',
+      emissiveIntensity: 2.8,
+      roughness: 0.1
+    });
+    const tailBlade = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.08, 0.06), tailMat);
+    tailBlade.position.set(0, 0.68, -2.22);
+    group.add(tailBlade);
+
+    // High Downforce Swan-Neck GT Rear Wing Spoiler
+    const wingGeom = new THREE.BoxGeometry(2.35, 0.06, 0.48);
     const wing = new THREE.Mesh(wingGeom, carbonMat);
-    wing.position.set(0, 1.25, -2.15);
+    wing.position.set(0, 1.28, -2.15);
     wing.castShadow = true;
     group.add(wing);
 
-    // Spoiler Struts (Dual Uprights)
-    const strutGeom = new THREE.BoxGeometry(0.06, 0.45, 0.25);
-    const strutL = new THREE.Mesh(strutGeom, carbonMat);
-    strutL.position.set(-0.65, 1.02, -2.12);
-    const strutR = strutL.clone();
-    strutR.position.x = 0.65;
-    group.add(strutL, strutR);
+    const wingEndL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.24, 0.46), carbonMat);
+    wingEndL.position.set(-1.17, 1.28, -2.15);
+    const wingEndR = wingEndL.clone();
+    wingEndR.position.x = 1.17;
+    group.add(wingEndL, wingEndR);
 
-    // 4. Front Dual High-Intensity LED Headlights + Real Three.js Spotlights!
-    const lightLensMat = new THREE.MeshStandardMaterial({
+    // Curved Swan-Neck Pylons
+    const pylonGeom = new THREE.CylinderGeometry(0.035, 0.035, 0.55, 8);
+    pylonGeom.rotateX(0.25);
+    const pylonL = new THREE.Mesh(pylonGeom, carbonMat);
+    pylonL.position.set(-0.65, 1.05, -1.95);
+    const pylonR = pylonL.clone();
+    pylonR.position.x = 0.65;
+    group.add(pylonL, pylonR);
+
+    // --- D. QUAD LED PROJECTOR HEADLIGHTS + REAL THREE.JS SPOTLIGHTS ---
+    const lensHaloMat = new THREE.MeshStandardMaterial({
       color: '#e0f2fe',
-      emissive: '#38bdf8',
-      emissiveIntensity: 4.5,
+      emissive: '#00f0ff',
+      emissiveIntensity: 2.2,
       roughness: 0.1
     });
-    const hLightGeom = new THREE.BoxGeometry(0.35, 0.12, 0.1);
-    const hLightL = new THREE.Mesh(hLightGeom, lightLensMat);
-    hLightL.position.set(-0.75, 0.52, 2.18);
-    const hLightR = hLightL.clone();
-    hLightR.position.x = 0.75;
-    group.add(hLightL, hLightR);
 
-    // Real dynamic SpotLight beams casting on road
-    const spotL = new THREE.SpotLight('#ffffff', 3.5, 38, Math.PI / 6, 0.35);
+    const createHeadlightUnit = (xPos) => {
+      const hGroup = new THREE.Group();
+      hGroup.position.set(xPos, 0.52, 2.12);
+      // Housing
+      hGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.15), carbonMat));
+      // Dual Projector Bulbs
+      const bulb1 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), lensHaloMat);
+      bulb1.position.set(-0.1, 0, 0.06);
+      const bulb2 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), lensHaloMat);
+      bulb2.position.set(0.1, 0, 0.06);
+      hGroup.add(bulb1, bulb2);
+      return hGroup;
+    };
+
+    group.add(createHeadlightUnit(-0.75));
+    group.add(createHeadlightUnit(0.75));
+
+    // Dynamic Road SpotLights (Cinematic road projection)
+    const spotL = new THREE.SpotLight('#fff7ed', 0.95, 32, Math.PI / 6, 0.45);
     spotL.position.set(-0.75, 0.55, 2.2);
     spotL.target.position.set(-0.75, 0.0, 16.0);
     group.add(spotL);
     group.add(spotL.target);
 
-    const spotR = new THREE.SpotLight('#ffffff', 3.5, 38, Math.PI / 6, 0.35);
+    const spotR = new THREE.SpotLight('#fff7ed', 0.95, 32, Math.PI / 6, 0.45);
     spotR.position.set(0.75, 0.55, 2.2);
     spotR.target.position.set(0.75, 0.0, 16.0);
     group.add(spotR);
     group.add(spotR.target);
 
-    // 5. Rear Dual Taillight Bar (GTA 6 Style Neon Crimson)
-    const tailMat = new THREE.MeshStandardMaterial({
-      color: '#ef4444',
-      emissive: '#ef4444',
-      emissiveIntensity: 4.0,
-      roughness: 0.1
-    });
-    const tailGeom = new THREE.BoxGeometry(1.9, 0.12, 0.08);
-    const tailMesh = new THREE.Mesh(tailGeom, tailMat);
-    tailMesh.position.set(0, 0.58, -2.2);
-    group.add(tailMesh);
+    // --- E. 5-SPOKE FORGED ALLOY WHEELS WITH CROSS-DRILLED BRAKES ---
+    const tireMat = new THREE.MeshStandardMaterial({ color: '#161616', roughness: 0.8, metalness: 0.1 });
+    const rimAlloyMat = new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.08, metalness: 0.98 });
+    const rotorMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.25, metalness: 0.92 });
+    const caliperMat = new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.2, metalness: 0.8 }); // Racing Yellow Brembo
 
-    // Dual Performance Exhaust Tips
-    const exhMat = new THREE.MeshStandardMaterial({
-      color: '#334155',
-      metalness: 0.95,
-      roughness: 0.2
-    });
-    const exhGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.25, 12);
-    exhGeom.rotateX(Math.PI / 2);
-    const exhL = new THREE.Mesh(exhGeom, exhMat);
-    exhL.position.set(-0.35, 0.35, -2.22);
-    const exhR = exhL.clone();
-    exhR.position.x = 0.35;
-    group.add(exhL, exhR);
-
-    // 6. Alloy Wheels with Disc Brakes & Tires
-    const tireMat = new THREE.MeshStandardMaterial({ color: '#171717', roughness: 0.75, metalness: 0.1 });
-    const rimMat = new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.15, metalness: 0.95 });
-    const brakeMat = new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.2, metalness: 0.8 });
-
-    const createWheel = (isFront) => {
+    const createForgedWheel = (isFront) => {
       const wheelPivot = new THREE.Group();
       const wheelMesh = new THREE.Group();
 
-      // Tire
-      const tireGeom = new THREE.CylinderGeometry(0.42, 0.42, 0.32, 20);
+      // Tire with outer beveled edge
+      const tireGeom = new THREE.CylinderGeometry(0.44, 0.44, 0.34, 24);
       tireGeom.rotateZ(Math.PI / 2);
       const tire = new THREE.Mesh(tireGeom, tireMat);
       tire.castShadow = true;
       wheelMesh.add(tire);
 
-      // Alloy Rim (Spokes)
-      const rimGeom = new THREE.CylinderGeometry(0.28, 0.28, 0.33, 16);
-      rimGeom.rotateZ(Math.PI / 2);
-      const rim = new THREE.Mesh(rimGeom, rimMat);
-      wheelMesh.add(rim);
+      // Deep Concave Rim Lip
+      const lipGeom = new THREE.CylinderGeometry(0.32, 0.32, 0.35, 20);
+      lipGeom.rotateZ(Math.PI / 2);
+      const lip = new THREE.Mesh(lipGeom, rimAlloyMat);
+      wheelMesh.add(lip);
 
-      // Center Nut
-      const nutGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.35, 8);
+      // 5-Spoke Star Design
+      for (let s = 0; s < 5; s++) {
+        const spokeAng = (s / 5) * Math.PI * 2;
+        const spokeGeom = new THREE.BoxGeometry(0.34, 0.06, 0.26);
+        const spoke = new THREE.Mesh(spokeGeom, rimAlloyMat);
+        spoke.position.set(0, Math.sin(spokeAng) * 0.16, Math.cos(spokeAng) * 0.16);
+        spoke.rotation.x = spokeAng;
+        wheelMesh.add(spoke);
+      }
+
+      // Center Wheel Nut
+      const nutGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.36, 12);
       nutGeom.rotateZ(Math.PI / 2);
-      const nut = new THREE.Mesh(nutGeom, brakeMat);
-      wheelMesh.add(nut);
+      wheelMesh.add(new THREE.Mesh(nutGeom, carbonMat));
+
+      // Cross-Drilled Brake Rotor
+      const rotorGeom = new THREE.CylinderGeometry(0.32, 0.32, 0.06, 20);
+      rotorGeom.rotateZ(Math.PI / 2);
+      const rotor = new THREE.Mesh(rotorGeom, rotorMat);
+      rotor.position.x = isFront ? 0.05 : -0.05;
+      wheelMesh.add(rotor);
+
+      // 6-Piston Brake Caliper
+      const caliperGeom = new THREE.BoxGeometry(0.08, 0.2, 0.12);
+      const caliper = new THREE.Mesh(caliperGeom, caliperMat);
+      caliper.position.set(isFront ? 0.05 : -0.05, 0.22, 0.08);
+      wheelMesh.add(caliper);
 
       wheelPivot.add(wheelMesh);
       return { pivot: wheelPivot, mesh: wheelMesh, isFront };
     };
 
-    const wFL = createWheel(true);
-    wFL.pivot.position.set(-1.05, 0.42, 1.35);
-    const wFR = createWheel(true);
-    wFR.pivot.position.set(1.05, 0.42, 1.35);
+    const wFL = createForgedWheel(true);
+    wFL.pivot.position.set(-1.08, 0.44, 1.4);
+    const wFR = createForgedWheel(true);
+    wFR.pivot.position.set(1.08, 0.44, 1.4);
 
-    const wBL = createWheel(false);
-    wBL.pivot.position.set(-1.05, 0.42, -1.35);
-    const wBR = createWheel(false);
-    wBR.pivot.position.set(1.05, 0.42, -1.35);
+    const wBL = createForgedWheel(false);
+    wBL.pivot.position.set(-1.08, 0.44, -1.4);
+    const wBR = createForgedWheel(false);
+    wBR.pivot.position.set(1.08, 0.44, -1.4);
 
     group.add(wFL.pivot, wFR.pivot, wBL.pivot, wBR.pivot);
 
-    // 7. Interactive Hovering Drive Icon / Hologram
+    // --- F. INTERACTIVE HOVERING DRIVE ICON ---
     const badgeCanvas = document.createElement('canvas');
     badgeCanvas.width = 128;
     badgeCanvas.height = 64;
     const bctx = badgeCanvas.getContext('2d');
-    bctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    bctx.fillStyle = 'rgba(9, 13, 22, 0.9)';
     bctx.fillRect(4, 4, 120, 56);
     bctx.strokeStyle = '#00f0ff';
     bctx.lineWidth = 3;
@@ -1485,7 +1686,7 @@ class Renderer3D {
     const badgeTex = new THREE.CanvasTexture(badgeCanvas);
     const badgeMat = new THREE.SpriteMaterial({ map: badgeTex, transparent: true, opacity: 0.95 });
     const badgeSprite = new THREE.Sprite(badgeMat);
-    badgeSprite.position.set(0, 2.2, 0);
+    badgeSprite.position.set(0, 2.3, 0);
     badgeSprite.scale.set(1.6, 0.8, 1);
     group.add(badgeSprite);
 
@@ -1494,21 +1695,20 @@ class Renderer3D {
       wFL, wFR, wBL, wBR,
       spotL, spotR,
       badgeSprite,
-      tailMesh
+      tailMesh: tailBlade
     };
 
     this.animatedVehicles.push({ actor, group, rig: actor._runtime.vehicleRig });
     return group;
   }
 
-  // GTA 6 Tropical Curved Coconut Palm Tree Mesh
+  // GTA 6 Organic Curved Tropical Coconut Palm Tree
   buildPalmTreeMesh(actor) {
     const group = new THREE.Group();
-    const height = actor.dimensions?.height || 7.0;
+    const height = actor.dimensions?.height || 7.8;
 
-    // Curved Trunk using multi-segment stacked tilted cylinders
     const barkMat = new THREE.MeshStandardMaterial({
-      color: '#5c4033',
+      color: '#523c2d',
       roughness: 0.85,
       metalness: 0.1
     });
@@ -1516,61 +1716,94 @@ class Renderer3D {
       barkMat.map = this.textures['palm_bark'];
     }
 
-    const segments = 6;
+    // 8 Stacked Organically Curved Trunk Segments
+    const segments = 8;
     const segHeight = height / segments;
     let currY = 0;
     let currX = 0;
     let currZ = 0;
-    const angleCurve = 0.05;
+    const curveAmount = 0.07;
 
     for (let i = 0; i < segments; i++) {
-      const radBottom = 0.42 * (1 - (i / segments) * 0.45);
-      const radTop = 0.42 * (1 - ((i + 1) / segments) * 0.45);
-      const geom = new THREE.CylinderGeometry(radTop, radBottom, segHeight, 12);
+      const radBottom = 0.44 * (1 - (i / segments) * 0.48);
+      const radTop = 0.44 * (1 - ((i + 1) / segments) * 0.48);
+      const geom = new THREE.CylinderGeometry(radTop, radBottom, segHeight, 14);
       const segMesh = new THREE.Mesh(geom, barkMat);
       segMesh.position.set(currX, currY + segHeight / 2, currZ);
-      segMesh.rotation.z = Math.sin(i * 0.3) * angleCurve;
+      segMesh.rotation.z = Math.sin(i * 0.35) * curveAmount;
       segMesh.castShadow = true;
       segMesh.receiveShadow = true;
       group.add(segMesh);
 
       currY += segHeight;
-      currX += Math.sin(i * 0.3) * angleCurve * segHeight;
+      currX += Math.sin(i * 0.35) * curveAmount * segHeight;
     }
 
-    // Coconut cluster under crown
-    const cocoMat = new THREE.MeshStandardMaterial({ color: '#2d1810', roughness: 0.7 });
-    for (let c = 0; c < 4; c++) {
-      const cocoGeom = new THREE.SphereGeometry(0.2, 8, 8);
+    // Cluster of 5 Coconuts Nestled Under Crown
+    const cocoMat = new THREE.MeshStandardMaterial({ color: '#2a170e', roughness: 0.75, metalness: 0.1 });
+    for (let c = 0; c < 5; c++) {
+      const cocoGeom = new THREE.SphereGeometry(0.22, 10, 10);
       const coco = new THREE.Mesh(cocoGeom, cocoMat);
-      const ang = (c / 4) * Math.PI * 2;
-      coco.position.set(currX + Math.cos(ang) * 0.28, currY - 0.2, currZ + Math.sin(ang) * 0.28);
+      const ang = (c / 5) * Math.PI * 2;
+      coco.position.set(currX + Math.cos(ang) * 0.32, currY - 0.22, currZ + Math.sin(ang) * 0.32);
+      coco.castShadow = true;
       group.add(coco);
     }
 
-    // Lush Palm Fronds radiating in crown
+    // 14 Organically Sculpted Arching Palm Fronds with Central Stems
     const frondMat = new THREE.MeshStandardMaterial({
       color: '#15803d',
-      roughness: 0.6,
+      roughness: 0.45,
       metalness: 0.1,
       side: THREE.DoubleSide
     });
+    const stemMat = new THREE.MeshStandardMaterial({
+      color: '#453225',
+      roughness: 0.85,
+      metalness: 0.05
+    });
 
     const fronds = [];
-    const frondCount = 10;
+    const frondCount = 14;
     for (let f = 0; f < frondCount; f++) {
       const angle = (f / frondCount) * Math.PI * 2;
       const frondGroup = new THREE.Group();
       frondGroup.position.set(currX, currY, currZ);
       frondGroup.rotation.y = angle;
 
-      // Arching leaf blade
-      const leafGeom = new THREE.PlaneGeometry(0.8, 3.2, 3, 6);
-      leafGeom.translate(0, 1.6, 0);
-      leafGeom.rotateX(-0.5); // Arch downward
+      // Tiering: Upper arch up, middle arch out, lower droop down
+      const tier = f % 3;
+      const archAngle = tier === 0 ? -0.25 : (tier === 1 ? -0.55 : -0.85);
+      const frondLen = tier === 0 ? 3.8 : (tier === 1 ? 4.5 : 4.0);
+      const frondWidth = tier === 0 ? 0.75 : (tier === 1 ? 0.88 : 0.8);
+
+      // Deform plane into tapered arching feather leaf
+      const leafGeom = new THREE.PlaneGeometry(frondWidth, frondLen, 6, 14);
+      const posAttr = leafGeom.attributes.position;
+      for (let v = 0; v < posAttr.count; v++) {
+        const vy = posAttr.getY(v) + frondLen / 2; // 0 to frondLen
+        const t = Math.max(0, Math.min(1, vy / frondLen));
+        // Taper: pointed tip and narrow base
+        const taper = Math.sin(t * Math.PI) * (1.1 - t * 0.4);
+        posAttr.setX(v, posAttr.getX(v) * taper);
+        // Organic parabolic arch droop
+        const droop = -Math.pow(t, 2.2) * 1.5;
+        posAttr.setZ(v, posAttr.getZ(v) + droop);
+        posAttr.setY(v, vy);
+      }
+      leafGeom.computeVertexNormals();
+      leafGeom.rotateX(archAngle);
+
       const leaf = new THREE.Mesh(leafGeom, frondMat);
       leaf.castShadow = true;
       frondGroup.add(leaf);
+
+      // Slender central woody spine
+      const stemGeom = new THREE.CylinderGeometry(0.015, 0.035, frondLen, 4);
+      stemGeom.translate(0, frondLen / 2, 0);
+      stemGeom.rotateX(archAngle);
+      const stem = new THREE.Mesh(stemGeom, stemMat);
+      frondGroup.add(stem);
 
       frondGroup.userData = {
         baseRotX: frondGroup.rotation.x,
@@ -1586,21 +1819,21 @@ class Renderer3D {
     return group;
   }
 
-  // GTA 6 Dynamic Coastal Ocean Water Plane with Wave Undulation
+  // GTA 6 Dynamic Coastal Ocean with Multi-Wave Undulation & Specular Glint
   buildOceanWaterMesh(actor) {
-    const width = actor.dimensions?.width || 140;
-    const depth = actor.dimensions?.depth || 140;
-    const geom = new THREE.PlaneGeometry(width, depth, 36, 36);
+    const width = actor.dimensions?.width || 160;
+    const depth = actor.dimensions?.depth || 200;
+    const geom = new THREE.PlaneGeometry(width, depth, 54, 54);
     geom.rotateX(-Math.PI / 2);
 
     const oceanMat = new THREE.MeshStandardMaterial({
       color: '#0284c7',
       emissive: '#0369a1',
-      emissiveIntensity: 0.25,
-      metalness: 0.9,
-      roughness: 0.08,
+      emissiveIntensity: 0.35,
+      metalness: 0.92,
+      roughness: 0.04, // High specular gloss for sun glitter path!
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.9,
       side: THREE.DoubleSide
     });
 
@@ -1612,105 +1845,233 @@ class Renderer3D {
     return mesh;
   }
 
-  // GTA 6 Art-Deco Miami Neon Hotel Building
+  // GTA 6 Art-Deco Miami Neon Hotel (Multi-Tiered Architectural Complex)
   buildBuildingMesh(actor) {
     const group = new THREE.Group();
-    const dims = actor.dimensions || { width: 14, height: 16, depth: 10 };
+    const dims = actor.dimensions || { width: 16, height: 20, depth: 12 };
+    const baseColor = actor.material?.color || '#fb7185'; // Flamingo Coral Pink
 
-    // 1. Main Pastel Hotel Tower
-    const hotelMat = new THREE.MeshStandardMaterial({
-      color: actor.material?.color || '#fb7185',
-      roughness: 0.45,
-      metalness: 0.15
-    });
+    // PBR Materials
+    const wallMat = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.55, metalness: 0.1 });
     if (this.textures['hotel_facade']) {
-      hotelMat.map = this.textures['hotel_facade'];
+      wallMat.map = this.textures['hotel_facade'];
+      wallMat.map.repeat.set(Math.round(dims.width / 8), Math.round(dims.height / 8));
+      if (this.textures['hotel_facade_normal']) {
+        wallMat.normalMap = this.textures['hotel_facade_normal'];
+        wallMat.normalScale = new THREE.Vector2(1.2, 1.2);
+        wallMat.normalMap.repeat.set(Math.round(dims.width / 8), Math.round(dims.height / 8));
+      }
+    }
+    const trimMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.35, metalness: 0.2 });
+    const graniteMat = new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.25, metalness: 0.75 });
+    const glassLitMat = new THREE.MeshStandardMaterial({ color: '#fef08a', emissive: '#fef08a', emissiveIntensity: 0.55, roughness: 0.2 });
+    const glassDarkMat = new THREE.MeshStandardMaterial({ color: '#090d16', roughness: 0.05, metalness: 0.95 });
+    const neonPink = new THREE.MeshStandardMaterial({ color: '#ff007f', emissive: '#ff007f', emissiveIntensity: 2.2, roughness: 0.1 });
+    const neonCyan = new THREE.MeshStandardMaterial({ color: '#00f0ff', emissive: '#00f0ff', emissiveIntensity: 2.2, roughness: 0.1 });
+
+    // --- TIER 1: GROUND LEVEL ARCADE & LOBBY ENTRANCE ---
+    const groundGeom = new THREE.BoxGeometry(dims.width + 2, 4.8, dims.depth + 1.5);
+    const groundMesh = new THREE.Mesh(groundGeom, graniteMat);
+    groundMesh.position.y = 2.4;
+    groundMesh.castShadow = true;
+    groundMesh.receiveShadow = true;
+    group.add(groundMesh);
+
+    // Plate Glass Lobby Windows
+    for (let w = -2; w <= 2; w++) {
+      if (w === 0) continue; // Entrance door
+      const windowMesh = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.8, 0.15), glassLitMat);
+      windowMesh.position.set(w * 3.2, 2.4, dims.depth / 2 + 0.8);
+      group.add(windowMesh);
     }
 
-    const towerGeom = new THREE.BoxGeometry(dims.width, dims.height, dims.depth);
-    const tower = new THREE.Mesh(towerGeom, hotelMat);
-    tower.position.y = dims.height / 2;
+    // Striped Entrance Canopy
+    const canopyGeom = new THREE.BoxGeometry(5.5, 0.25, 3.8);
+    const canopy = new THREE.Mesh(canopyGeom, trimMat);
+    canopy.position.set(0, 3.8, dims.depth / 2 + 2.0);
+    canopy.castShadow = true;
+    group.add(canopy);
+
+    // Warm Brass Sconces (Soft accent lighting)
+    const sconceL = new THREE.PointLight('#fef08a', 0.45, 6);
+    sconceL.position.set(-2.4, 3.2, dims.depth / 2 + 1.6);
+    const sconceR = sconceL.clone();
+    sconceR.position.x = 2.4;
+    group.add(sconceL, sconceR);
+
+    // --- TIER 2: MAIN GUEST TOWER WITH 3D FLUTED PILASTERS & WINDOWS ---
+    const midHeight = dims.height * 0.65;
+    const towerGeom = new THREE.BoxGeometry(dims.width, midHeight, dims.depth);
+    const tower = new THREE.Mesh(towerGeom, wallMat);
+    tower.position.y = 4.8 + midHeight / 2;
     tower.castShadow = true;
     tower.receiveShadow = true;
     group.add(tower);
 
-    // 2. White Art-Deco Balconies & Eyebrows
-    const trimMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.3, metalness: 0.2 });
-    for (let floor = 1; floor <= 3; floor++) {
-      const balcGeom = new THREE.BoxGeometry(dims.width + 0.6, 0.25, 1.2);
-      const balc = new THREE.Mesh(balcGeom, trimMat);
-      balc.position.set(0, floor * 3.8, dims.depth / 2 + 0.5);
-      balc.castShadow = true;
-      group.add(balc);
+    // 3D Fluted Vertical Pilasters separating window bays
+    for (let p = -2; p <= 2; p++) {
+      const pilasterGeom = new THREE.BoxGeometry(0.5, midHeight + 0.5, 0.4);
+      const pilaster = new THREE.Mesh(pilasterGeom, trimMat);
+      pilaster.position.set(p * 3.5, 4.8 + midHeight / 2, dims.depth / 2 + 0.15);
+      pilaster.castShadow = true;
+      group.add(pilaster);
     }
 
-    // 3. Ground Entrance Canopy
-    const canopyGeom = new THREE.BoxGeometry(5.0, 0.3, 3.2);
-    const canopy = new THREE.Mesh(canopyGeom, trimMat);
-    canopy.position.set(0, 3.2, dims.depth / 2 + 1.6);
-    canopy.castShadow = true;
-    group.add(canopy);
+    // Recessed 3D Windows & Cantilevered Balconies
+    const floors = 3;
+    for (let f = 0; f < floors; f++) {
+      const floorY = 6.2 + f * 3.8;
 
-    // Entrance Sconce Lights
-    const sconceL = new THREE.PointLight('#fef08a', 2.0, 8);
-    sconceL.position.set(-2.0, 2.6, dims.depth / 2 + 1.2);
-    const sconceR = sconceL.clone();
-    sconceR.position.x = 2.0;
-    group.add(sconceL, sconceR);
+      // 3D Balcony Platform
+      const balcGeom = new THREE.BoxGeometry(dims.width + 0.8, 0.35, 1.4);
+      const balc = new THREE.Mesh(balcGeom, trimMat);
+      balc.position.set(0, floorY, dims.depth / 2 + 0.65);
+      balc.castShadow = true;
+      group.add(balc);
 
-    // 4. Roof Neon Billboard Sign ("HOTEL VICE")
+      // Balcony Stainless Steel Railing
+      const railGeom = new THREE.BoxGeometry(dims.width + 0.6, 0.8, 0.06);
+      const rail = new THREE.Mesh(railGeom, trimMat);
+      rail.position.set(0, floorY + 0.5, dims.depth / 2 + 1.3);
+      group.add(rail);
+
+      // Windows along the floor
+      for (let w = -2; w <= 2; w++) {
+        const isLit = (f + w) % 2 === 0;
+        const winMesh = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.0, 0.15), isLit ? glassLitMat : glassDarkMat);
+        winMesh.position.set(w * 3.5, floorY + 1.2, dims.depth / 2 + 0.05);
+        group.add(winMesh);
+      }
+    }
+
+    // Side Facade Windows & Horizontal Glowing Neon Ribbons (Facing down the Highway)
+    [-dims.width / 2 - 0.05, dims.width / 2 + 0.05].forEach((sideX, sideIdx) => {
+      for (let f = 0; f < floors; f++) {
+        const floorY = 6.2 + f * 3.8;
+        for (let sz = -1; sz <= 1; sz++) {
+          const isLit = (f + sz + sideIdx) % 2 === 0;
+          const sideWin = new THREE.Mesh(
+            new THREE.BoxGeometry(0.15, 2.0, 1.8),
+            isLit ? glassLitMat : glassDarkMat
+          );
+          sideWin.position.set(sideX, floorY + 1.2, sz * 3.2);
+          group.add(sideWin);
+        }
+
+        // Horizontal Neon Trim ribbon wrapping the side
+        const neonTrim = new THREE.Mesh(
+          new THREE.BoxGeometry(0.2, 0.12, dims.depth + 0.2),
+          f % 2 === 0 ? neonCyan : neonPink
+        );
+        neonTrim.position.set(sideX, floorY + 0.05, 0);
+        group.add(neonTrim);
+      }
+    });
+
+    // --- TIER 3: SETBACK PENTHOUSE & STEPPED SUNBURST CROWN ---
+    const pentHeight = 4.5;
+    const pentGeom = new THREE.BoxGeometry(dims.width * 0.75, pentHeight, dims.depth * 0.75);
+    const pent = new THREE.Mesh(pentGeom, wallMat);
+    pent.position.y = 4.8 + midHeight + pentHeight / 2;
+    pent.castShadow = true;
+    group.add(pent);
+
+    // Decorative Art-Deco Crown Parapet
+    const crownGeom = new THREE.BoxGeometry(dims.width * 0.55, 2.2, dims.depth * 0.55);
+    const crown = new THREE.Mesh(crownGeom, trimMat);
+    crown.position.y = 4.8 + midHeight + pentHeight + 1.1;
+    group.add(crown);
+
+    // Central Art-Deco Spire Fin
+    const finGeom = new THREE.BoxGeometry(0.8, 3.8, 1.6);
+    const fin = new THREE.Mesh(finGeom, trimMat);
+    fin.position.y = 4.8 + midHeight + pentHeight + 3.2;
+    group.add(fin);
+
+    // --- TIER 4: 3D VIBRANT NEON SIGNAGE & ROOFTOP UTILITIES ---
     const signGroup = new THREE.Group();
-    signGroup.position.set(0, dims.height + 1.4, 0);
+    signGroup.position.set(0, 4.8 + midHeight + pentHeight + 1.6, dims.depth / 2 - 1.0);
 
-    const signBoardGeom = new THREE.BoxGeometry(dims.width * 0.7, 1.8, 0.4);
-    const signBoardMat = new THREE.MeshStandardMaterial({ color: '#090d16', metalness: 0.9, roughness: 0.2 });
-    const signBoard = new THREE.Mesh(signBoardGeom, signBoardMat);
+    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(9.0, 1.8, 0.4), graniteMat);
     signGroup.add(signBoard);
 
-    // Glowing Neon Letters / Band
-    const neonMat = new THREE.MeshStandardMaterial({
-      color: '#ff2d55',
-      emissive: '#ff2d55',
-      emissiveIntensity: 3.8,
-      roughness: 0.1
-    });
-    const neonBarGeom = new THREE.BoxGeometry(dims.width * 0.65, 0.3, 0.45);
-    const neonBar = new THREE.Mesh(neonBarGeom, neonMat);
-    neonBar.position.y = 0.55;
-    signGroup.add(neonBar);
+    const neonBarTop = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.22, 0.45), neonPink);
+    neonBarTop.position.y = 0.55;
+    const neonBarBot = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.22, 0.45), neonCyan);
+    neonBarBot.position.y = -0.55;
+    signGroup.add(neonBarTop, neonBarBot);
 
-    const neonBar2 = neonBar.clone();
-    neonBar2.material = new THREE.MeshStandardMaterial({
-      color: '#00f0ff',
-      emissive: '#00f0ff',
-      emissiveIntensity: 3.8,
-      roughness: 0.1
-    });
-    neonBar2.position.y = -0.55;
-    signGroup.add(neonBar2);
+    // Neon Text Sprite ("★ HOTEL VICE ★")
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 128;
+    const sctx = signCanvas.getContext('2d');
+    sctx.fillStyle = '#0b0f19';
+    sctx.fillRect(0, 0, 512, 128);
+    sctx.strokeStyle = '#00f0ff';
+    sctx.lineWidth = 4;
+    sctx.strokeRect(8, 8, 496, 112);
+    sctx.shadowColor = '#ff007f';
+    sctx.shadowBlur = 16;
+    sctx.fillStyle = '#ff1493';
+    sctx.font = 'bold 44px sans-serif';
+    sctx.textAlign = 'center';
+    sctx.textBaseline = 'middle';
+    sctx.fillText('★ HOTEL VICE ★', 256, 64);
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    const signSprite = new THREE.Mesh(
+      new THREE.PlaneGeometry(8.2, 1.3),
+      new THREE.MeshStandardMaterial({
+        map: signTex,
+        emissiveMap: signTex,
+        emissive: '#ff007f',
+        emissiveIntensity: 1.2,
+        roughness: 0.2
+      })
+    );
+    signSprite.position.set(0, 0, 0.25);
+    const signSpriteBack = signSprite.clone();
+    signSpriteBack.position.set(0, 0, -0.25);
+    signSpriteBack.rotation.y = Math.PI;
+    signGroup.add(signSprite, signSpriteBack);
 
     group.add(signGroup);
+
+    // Rooftop AC Chiller Unit & Radio Mast
+    const acUnit = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.6, 2.2), new THREE.MeshStandardMaterial({ color: '#475569', roughness: 0.6 }));
+    acUnit.position.set(-4.5, 4.8 + midHeight + 0.8, -2.5);
+    group.add(acUnit);
+
+    const mastGeom = new THREE.CylinderGeometry(0.04, 0.08, 6.0, 8);
+    const mast = new THREE.Mesh(mastGeom, trimMat);
+    mast.position.set(3.5, 4.8 + midHeight + 3.0, -2.5);
+    group.add(mast);
+
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshStandardMaterial({ color: '#ef4444', emissive: '#ef4444', emissiveIntensity: 6.0 }));
+    beacon.position.set(3.5, 4.8 + midHeight + 6.0, -2.5);
+    group.add(beacon);
+
     return group;
   }
 
-  // GTA 6 Asphalt Highway / Boulevard Road with Curbs & Puddles
+  // GTA 6 Asphalt Highway / Boulevard with Wet Specular Puddles & Curbs
   buildRoadMesh(actor) {
     const group = new THREE.Group();
-    const width = actor.dimensions?.width || 14;
-    const length = actor.dimensions?.depth || 140;
+    const width = actor.dimensions?.width || 16;
+    const length = actor.dimensions?.depth || 180;
 
-    // 1. Asphalt Deck
+    // 1. Dark Asphalt Road Deck (NOT white!)
     const roadMat = new THREE.MeshStandardMaterial({
-      color: '#ffffff',
-      roughness: 0.35,
-      metalness: 0.4
+      color: '#151821', // Deep dark tarmac asphalt
+      roughness: 0.65,
+      metalness: 0.2
     });
     if (this.textures['asphalt_road']) {
       roadMat.map = this.textures['asphalt_road'];
       roadMat.map.repeat.set(1, Math.round(length / 14));
       if (this.textures['asphalt_road_normal']) {
         roadMat.normalMap = this.textures['asphalt_road_normal'];
-        roadMat.normalScale = new THREE.Vector2(1.5, 1.5);
+        roadMat.normalScale = new THREE.Vector2(1.6, 1.6);
         roadMat.normalMap.repeat.set(1, Math.round(length / 14));
       }
     }
@@ -1721,8 +2082,34 @@ class Renderer3D {
     roadMesh.receiveShadow = true;
     group.add(roadMesh);
 
-    // 2. Concrete Curbs (Left & Right)
-    const curbMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.7, metalness: 0.1 });
+    // 2. Next-Gen Wet Puddle Decals (High Specular Mirror Reflection)
+    const puddleMat = new THREE.MeshStandardMaterial({
+      color: '#070a10',
+      metalness: 0.98,
+      roughness: 0.02, // Mirror-like reflection!
+      transparent: true,
+      opacity: 0.88
+    });
+
+    const puddleConfigs = [
+      { x: 3.2, z: 12, rx: 2.2, rz: 4.5 },
+      { x: -3.5, z: -18, rx: 2.8, rz: 5.2 },
+      { x: 1.5, z: 42, rx: 1.8, rz: 3.8 },
+      { x: -2.0, z: 65, rx: 2.4, rz: 4.8 },
+      { x: 3.8, z: -45, rx: 2.0, rz: 4.2 }
+    ];
+
+    for (const pc of puddleConfigs) {
+      const pGeom = new THREE.CylinderGeometry(pc.rx, pc.rx, 0.02, 16);
+      pGeom.scale(1.0, 1.0, pc.rz / pc.rx);
+      const pMesh = new THREE.Mesh(pGeom, puddleMat);
+      pMesh.position.set(pc.x, 0.31, pc.z);
+      pMesh.receiveShadow = true;
+      group.add(pMesh);
+    }
+
+    // 3. Concrete Raised Curbs (Left & Right)
+    const curbMat = new THREE.MeshStandardMaterial({ color: '#78716c', roughness: 0.8, metalness: 0.1 });
     const curbGeom = new THREE.BoxGeometry(0.5, 0.45, length);
     const curbL = new THREE.Mesh(curbGeom, curbMat);
     curbL.position.set(-width / 2 - 0.25, 0.22, 0);
@@ -1733,13 +2120,19 @@ class Renderer3D {
     curbR.position.x = width / 2 + 0.25;
     group.add(curbL, curbR);
 
-    // 3. Sidewalk Promenade (Pedestrian walkway)
-    const walkMat = new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.6, metalness: 0.1 });
-    const walkGeom = new THREE.BoxGeometry(4.0, 0.4, length);
+    // 4. Pedestrian Sidewalk Promenade
+    const walkMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.7, metalness: 0.15 });
+    const walkGeom = new THREE.BoxGeometry(4.5, 0.4, length);
     const walkL = new THREE.Mesh(walkGeom, walkMat);
     walkL.position.set(-width / 2 - 2.5, 0.2, 0);
     walkL.receiveShadow = true;
     group.add(walkL);
+
+    // East Promenade (Hotel side)
+    const walkR = new THREE.Mesh(walkGeom, walkMat);
+    walkR.position.set(width / 2 + 2.5, 0.2, 0);
+    walkR.receiveShadow = true;
+    group.add(walkR);
 
     return group;
   }
@@ -1747,44 +2140,43 @@ class Renderer3D {
   // GTA 6 Coastal Boulevard Street Light Lamppost
   buildStreetLightMesh(actor) {
     const group = new THREE.Group();
-    const height = 6.5;
+    const height = 7.0;
 
-    const metalMat = new THREE.MeshStandardMaterial({ color: '#334155', metalness: 0.85, roughness: 0.25 });
+    const metalMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.9, roughness: 0.2 });
 
-    // Vertical Post
-    const postGeom = new THREE.CylinderGeometry(0.12, 0.18, height, 12);
+    // Tapered Steel Pole
+    const postGeom = new THREE.CylinderGeometry(0.14, 0.22, height, 16);
     const post = new THREE.Mesh(postGeom, metalMat);
     post.position.y = height / 2;
     post.castShadow = true;
     group.add(post);
 
-    // Overhanging Arm
-    const armGeom = new THREE.BoxGeometry(2.0, 0.1, 0.1);
+    // Arched Overhanging Arm
+    const armGeom = new THREE.BoxGeometry(2.4, 0.12, 0.12);
     const arm = new THREE.Mesh(armGeom, metalMat);
-    arm.position.set(0.9, height - 0.1, 0);
+    arm.position.set(1.1, height - 0.15, 0);
     group.add(arm);
 
-    // Luminaire Housing & Emissive Lens
-    const headGeom = new THREE.BoxGeometry(0.6, 0.12, 0.35);
-    const headMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.9, roughness: 0.2 });
-    const head = new THREE.Mesh(headGeom, headMat);
-    head.position.set(1.7, height - 0.2, 0);
+    // Cobra Head Luminaire
+    const headGeom = new THREE.BoxGeometry(0.7, 0.16, 0.4);
+    const head = new THREE.Mesh(headGeom, metalMat);
+    head.position.set(2.1, height - 0.25, 0);
     group.add(head);
 
-    const lensGeom = new THREE.BoxGeometry(0.5, 0.04, 0.28);
+    const lensGeom = new THREE.BoxGeometry(0.6, 0.04, 0.32);
     const lensMat = new THREE.MeshStandardMaterial({
       color: '#fef08a',
       emissive: '#fef08a',
-      emissiveIntensity: 4.0
+      emissiveIntensity: 4.5
     });
     const lens = new THREE.Mesh(lensGeom, lensMat);
-    lens.position.set(1.7, height - 0.28, 0);
+    lens.position.set(2.1, height - 0.34, 0);
     group.add(lens);
 
-    // Warm street light casting down
-    const streetLight = new THREE.SpotLight('#fef08a', 3.2, 22, Math.PI / 4, 0.4);
-    streetLight.position.set(1.7, height - 0.3, 0);
-    streetLight.target.position.set(1.7, 0, 0);
+    // Warm Golden Street Light SpotLight Casting Downward
+    const streetLight = new THREE.SpotLight('#fef08a', 3.5, 24, Math.PI / 4, 0.45);
+    streetLight.position.set(2.1, height - 0.36, 0);
+    streetLight.target.position.set(2.1, 0, 0);
     group.add(streetLight);
     group.add(streetLight.target);
 
@@ -1795,26 +2187,26 @@ class Renderer3D {
   buildTrafficConeMesh(actor) {
     const group = new THREE.Group();
 
-    // Base square
-    const baseMat = new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.4 });
-    const baseGeom = new THREE.BoxGeometry(0.6, 0.06, 0.6);
+    // Base square with beveled lip
+    const baseMat = new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.35 });
+    const baseGeom = new THREE.BoxGeometry(0.65, 0.06, 0.65);
     const base = new THREE.Mesh(baseGeom, baseMat);
     base.position.y = 0.03;
     base.castShadow = true;
     group.add(base);
 
-    // Orange Cone
-    const coneGeom = new THREE.ConeGeometry(0.24, 0.85, 16);
+    // Orange Safety Cone
+    const coneGeom = new THREE.ConeGeometry(0.24, 0.9, 18);
     const cone = new THREE.Mesh(coneGeom, baseMat);
-    cone.position.y = 0.45;
+    cone.position.y = 0.48;
     cone.castShadow = true;
     group.add(cone);
 
-    // Reflective White Band
-    const bandMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, metalness: 0.5 });
-    const bandGeom = new THREE.CylinderGeometry(0.14, 0.17, 0.2, 16);
+    // Reflective Micro-Prismatic White Sleeve Band
+    const bandMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.15, metalness: 0.6 });
+    const bandGeom = new THREE.CylinderGeometry(0.14, 0.18, 0.24, 18);
     const band = new THREE.Mesh(bandGeom, bandMat);
-    band.position.y = 0.42;
+    band.position.y = 0.45;
     group.add(band);
 
     return group;
