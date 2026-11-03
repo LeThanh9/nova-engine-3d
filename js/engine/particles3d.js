@@ -106,6 +106,45 @@ class ParticleSystem3D {
     });
   }
 
+  // Unreal Style Expanding Shockwave Ring
+  shockwaveRing(x, y, z, color = '#00f0ff', count = 36) {
+    for (let i = 0; i < count; i++) {
+      if (this.particles.length >= this.maxParticles) break;
+      const angle = (i / count) * Math.PI * 2;
+      const speed = 7.0 + Math.random() * 2.0;
+      const c = new THREE.Color(color);
+
+      this.particles.push({
+        x: x,
+        y: y + 0.1,
+        z: z,
+        vx: Math.cos(angle) * speed,
+        vy: 0.3 + Math.random() * 0.5,
+        vz: Math.sin(angle) * speed,
+        life: 0.45,
+        maxLife: 0.45,
+        size: 0.65,
+        r: c.r,
+        g: c.g,
+        b: c.b,
+        gravity: 0.2
+      });
+    }
+  }
+
+  // Glowing Plasma Bullet Particle Trail
+  plasmaTrail(x, y, z, color = '#00f0ff') {
+    this.emit({
+      origin: { x, y, z },
+      color: color,
+      count: 3,
+      speed: 0.6,
+      life: 0.25,
+      size: 0.35,
+      gravity: -0.2
+    });
+  }
+
   update(dt) {
     const posAttr = this.geometry.attributes.position;
     const colAttr = this.geometry.attributes.color;

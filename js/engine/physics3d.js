@@ -68,6 +68,10 @@ class Physics3D {
           );
           break;
 
+        case 'character':
+          shape = new CANNON.Cylinder(0.5 * Math.abs(scale.x), 0.5 * Math.abs(scale.x), 1.8 * Math.abs(scale.y), 12);
+          break;
+
         case 'capsule':
           // Approximate capsule with sphere or box
           shape = new CANNON.Sphere(dims.radius * Math.abs(scale.x));
@@ -89,6 +93,12 @@ class Physics3D {
         linearDamping: actor.physics.linearDamping || 0.05,
         angularDamping: actor.physics.angularDamping || 0.05
       });
+
+      // Prevent player character from tumbling over
+      if (actor.shape === 'character') {
+        body.fixedRotation = true;
+        body.updateMassProperties();
+      }
 
       // Material bounciness
       body.material = new CANNON.Material({

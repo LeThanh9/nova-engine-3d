@@ -102,6 +102,50 @@ class SoundEngine {
       decay: 0.8,
       volume: 0.6
     });
+
+    this.sounds.set('snd_plasma', {
+      name: 'Pháo Năng Lượng (Plasma Cannon)',
+      type: 'laser',
+      wave: 'sawtooth',
+      startFreq: 1200,
+      endFreq: 180,
+      attack: 0.005,
+      decay: 0.22,
+      volume: 0.55
+    });
+
+    this.sounds.set('snd_bounce', {
+      name: 'Bệ Phóng (Jump Pad)',
+      type: 'jump',
+      wave: 'triangle',
+      startFreq: 140,
+      endFreq: 850,
+      attack: 0.01,
+      decay: 0.28,
+      volume: 0.65
+    });
+
+    this.sounds.set('snd_shockwave', {
+      name: 'Sóng Xung Kích (Shockwave)',
+      type: 'noise',
+      wave: 'noise',
+      startFreq: 80,
+      endFreq: 25,
+      attack: 0.01,
+      decay: 0.5,
+      volume: 0.75
+    });
+
+    this.sounds.set('snd_step', {
+      name: 'Bước Chân Robot (Servo Step)',
+      type: 'hit',
+      wave: 'sine',
+      startFreq: 320,
+      endFreq: 90,
+      attack: 0.005,
+      decay: 0.06,
+      volume: 0.25
+    });
   }
 
   // Play a sound by ID or parameter config

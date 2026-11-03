@@ -249,6 +249,18 @@ class GameExporter3D {
           const p = this.player.transform.position;
           this.camera.position.lerp(new THREE.Vector3(p.x, p.y + 3.5, p.z + 7.0), 0.12);
           this.camera.lookAt(p.x, p.y + 1.2, p.z);
+
+          // Jump Pad Boost Check
+          if (body) {
+            for (const act of this.actors) {
+              if (act.tag === 'jumppad') {
+                const dist = Math.hypot(body.position.x - act.transform.position.x, body.position.z - act.transform.position.z);
+                if (dist < 2.0 && Math.abs(body.position.y - act.transform.position.y) < 1.2) {
+                  body.velocity.y = 22.0;
+                }
+              }
+            }
+          }
         }
 
         // Physics Step

@@ -121,6 +121,41 @@ const EngineTemplates3D = {
           physics: { enabled: true, type: 'dynamic', mass: 1.5, restitution: 0.3 }
         },
 
+        // High-Tech Unreal Jump Pad (Catapults player onto the high arena!)
+        {
+          name: 'Sci-Fi Launch Pad',
+          tag: 'jumppad',
+          shape: 'cylinder',
+          dimensions: { radiusTop: 1.8, radiusBottom: 2.1, height: 0.35, width: 3.6 },
+          transform: { position: { x: 8, y: 0.18, z: -1 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: {
+            color: '#00f0ff',
+            emissive: '#00f0ff',
+            emissiveIntensity: 2.5
+          },
+          physics: { enabled: true, type: 'static', friction: 0.5 }
+        },
+
+        // Explosive Metal Hazard Barrels (Blast away with plasma cannon!)
+        {
+          name: 'Explosive Barrel Alpha',
+          tag: 'barrel',
+          shape: 'cylinder',
+          dimensions: { radiusTop: 0.7, radiusBottom: 0.7, height: 1.6, radius: 0.7 },
+          transform: { position: { x: -6, y: 0.8, z: -3 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#ef4444', metalness: 0.7, roughness: 0.3 },
+          physics: { enabled: true, type: 'dynamic', mass: 1.2, restitution: 0.4 }
+        },
+        {
+          name: 'Explosive Barrel Beta',
+          tag: 'barrel',
+          shape: 'cylinder',
+          dimensions: { radiusTop: 0.7, radiusBottom: 0.7, height: 1.6, radius: 0.7 },
+          transform: { position: { x: -4.8, y: 0.8, z: -4.5 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#ef4444', metalness: 0.7, roughness: 0.3 },
+          physics: { enabled: true, type: 'dynamic', mass: 1.2, restitution: 0.4 }
+        },
+
         // Floating Spinning Energy Crystals with Glowing Bloom
         {
           name: 'Energy Crystal Alpha',

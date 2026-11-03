@@ -65,6 +65,16 @@ class Editor3DUI {
       e.target.classList.toggle('active', this.engine.renderer3d.gridHelper.visible);
     });
 
+    // Toggle Unreal STAT HUD Overlay
+    document.getElementById('toggle-stats')?.addEventListener('click', (e) => {
+      const overlay = document.getElementById('ue-stat-overlay');
+      if (overlay) {
+        const isHidden = overlay.style.display === 'none';
+        overlay.style.display = isHidden ? 'flex' : 'none';
+        e.target.classList.toggle('active', isHidden);
+      }
+    });
+
     // Export HTML & Save JSON
     document.getElementById('btn-export-html')?.addEventListener('click', () => {
       if (window.gameExporter3D) {
@@ -191,6 +201,42 @@ class Editor3DUI {
             { type: 'rotate3D', speedY: 90 },
             { type: 'collectible3D', scoreValue: 50 }
           ]
+        });
+        break;
+
+      case 'crate':
+        this.engine.addActor({
+          name: 'Hazard_Crate',
+          tag: 'crate',
+          shape: 'box',
+          dimensions: { width: 1.6, height: 1.6, depth: 1.6 },
+          transform: { position: spawnPos },
+          material: { color: '#eab308', metalness: 0.6, roughness: 0.4 },
+          physics: { enabled: true, type: 'dynamic', mass: 1.5, restitution: 0.3 }
+        });
+        break;
+
+      case 'jumppad':
+        this.engine.addActor({
+          name: 'Launch_Pad',
+          tag: 'jumppad',
+          shape: 'cylinder',
+          transform: { position: { x: spawnPos.x, y: 0.2, z: spawnPos.z } },
+          dimensions: { radiusTop: 1.8, radiusBottom: 2.1, height: 0.35, width: 3.6 },
+          material: { color: '#00f0ff', emissive: '#00f0ff', emissiveIntensity: 2.5 },
+          physics: { enabled: true, type: 'static', friction: 0.5 }
+        });
+        break;
+
+      case 'barrel':
+        this.engine.addActor({
+          name: 'Hazard_Barrel',
+          tag: 'barrel',
+          shape: 'cylinder',
+          transform: { position: spawnPos },
+          dimensions: { radiusTop: 0.7, radiusBottom: 0.7, height: 1.6, radius: 0.7 },
+          material: { color: '#ef4444', metalness: 0.8, roughness: 0.3 },
+          physics: { enabled: true, type: 'dynamic', mass: 1.2, restitution: 0.4 }
         });
         break;
     }
@@ -534,6 +580,20 @@ class Editor3DUI {
     if (fpsElem) fpsElem.innerText = `${this.engine.fps} FPS`;
     if (actorElem) actorElem.innerText = `${this.engine.actors.length} Actors`;
     if (scoreElem) scoreElem.innerText = `Điểm: ${this.engine.score}`;
+
+    // Unreal Engine Viewport STAT HUD Overlay
+    const statFpsVal = document.getElementById('stat-fps-val');
+    const statMsVal = document.getElementById('stat-ms-val');
+    const statActorsVal = document.getElementById('stat-actors-val');
+    const statDrawsVal = document.getElementById('stat-draws-val');
+
+    if (statFpsVal) statFpsVal.innerText = `${this.engine.fps.toFixed(1)}`;
+    if (statMsVal) statMsVal.innerText = `${(1000 / Math.max(1, this.engine.fps)).toFixed(1)} ms`;
+    if (statActorsVal) statActorsVal.innerText = `${this.engine.actors.length}`;
+    if (statDrawsVal) {
+      const calls = this.engine.renderer3d?.renderer?.info?.render?.calls || 18;
+      statDrawsVal.innerText = `${calls}`;
+    }
   }
 
   log(msg, type = 'info') {

@@ -22,6 +22,10 @@ class NovaEngine3D {
     this.playSnapshot = null;
     this.score = 0;
 
+    // Combat & FX State
+    this.projectiles = [];
+    this.cameraShake = 0;
+
     // Loop & Stats
     this.fps = 60;
     this.fpsTimer = 0;
@@ -35,9 +39,18 @@ class NovaEngine3D {
   }
 
   init(canvasElement) {
+    this.canvas = canvasElement;
     this.renderer3d = new Renderer3D(canvasElement, this);
     this.physics3d = new Physics3D(this);
     this.particles3d = new ParticleSystem3D(this.renderer3d.scene);
+
+    // Mouse Controls in Play Mode (Right Click or Left Click = Fire Plasma Blaster)
+    canvasElement.addEventListener('mousedown', (e) => {
+      if (this.isPlaying && (e.button === 0 || e.button === 2)) {
+        this.firePlasmaCannon();
+      }
+    });
+    canvasElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // Load initial 3D Adventure Template
     this.loadTemplate('adventure3d');
@@ -54,6 +67,11 @@ class NovaEngine3D {
         this.keysPressed[e.code] = true;
       }
       this.keys[e.code] = true;
+
+      // Combat: F or Q = Fire Plasma Cannon in Play Mode
+      if ((e.code === 'KeyF' || e.code === 'KeyQ') && this.isPlaying) {
+        this.firePlasmaCannon();
+      }
 
       // F5 = Play / Stop toggle
       if (e.key === 'F5') {
@@ -222,6 +240,15 @@ class NovaEngine3D {
       this.playSnapshot = null;
     }
 
+    // Clean up active combat projectiles
+    for (const p of this.projectiles) {
+      if (p.mesh && this.renderer3d?.scene) {
+        this.renderer3d.scene.remove(p.mesh);
+      }
+    }
+    this.projectiles = [];
+    this.cameraShake = 0;
+
     this.particles3d.clear();
     this.selectedActor = this.actors.find(a => a.tag === 'player') || this.actors[0] || null;
     if (this.selectedActor && this.renderer3d) {
@@ -272,15 +299,18 @@ class NovaEngine3D {
   }
 
   updateSimulation(dt) {
-    // 1. Update 3D Behaviors (Character Controller, Camera Follow, Rotate, Patrol)
+    // 1. Update 3D Behaviors & Character Articulated Animation
     this.updateBehaviors(dt);
 
-    // 2. Update Cannon.js 3D Physics
+    // 2. Update Plasma Cannon Projectiles & Combat Explosions
+    this.updateProjectiles(dt);
+
+    // 3. Update Cannon.js 3D Physics
     if (this.physics3d) {
       this.physics3d.update(dt);
     }
 
-    // 3. Update Three.js meshes from Actor transform
+    // 4. Update Three.js meshes from Actor transform
     for (const actor of this.actors) {
       if (actor._runtime.threeMesh) {
         actor._runtime.threeMesh.position.set(
@@ -304,6 +334,156 @@ class NovaEngine3D {
         }
       }
     }
+
+    // 5. Apply Camera Screen Shake
+    if (this.cameraShake > 0) {
+      const cam = this.renderer3d.camera;
+      cam.position.x += (Math.random() - 0.5) * this.cameraShake;
+      cam.position.y += (Math.random() - 0.5) * this.cameraShake;
+      this.cameraShake = Math.max(0, this.cameraShake - dt * 2.5);
+    }
+  }
+
+  // Fires an Unreal-Style High-Tech Plasma Energy Blaster
+  firePlasmaCannon() {
+    const player = this.actors.find(a => a.tag === 'player');
+    if (!player) return;
+
+    const cam = this.renderer3d.camera;
+    const forward = new THREE.Vector3();
+    cam.getWorldDirection(forward);
+
+    // Spawn projectile just ahead of player
+    const spawnPos = new THREE.Vector3(
+      player.transform.position.x + forward.x * 1.2,
+      player.transform.position.y + 1.2,
+      player.transform.position.z + forward.z * 1.2
+    );
+
+    // Three.js Projectile Mesh (Glowing Cyan Energy Core)
+    const geom = new THREE.SphereGeometry(0.28, 16, 16);
+    const mat = new THREE.MeshStandardMaterial({
+      color: '#00f0ff',
+      emissive: '#00f0ff',
+      emissiveIntensity: 4.5,
+      roughness: 0.1
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.copy(spawnPos);
+    this.renderer3d.scene.add(mesh);
+
+    // Dynamic Point Light attached to bullet
+    const pLight = new THREE.PointLight('#00f0ff', 2.0, 10);
+    mesh.add(pLight);
+
+    const projectile = {
+      mesh: mesh,
+      pos: spawnPos,
+      vel: forward.clone().multiplyScalar(32.0),
+      life: 2.5
+    };
+    this.projectiles.push(projectile);
+
+    this.sound.play('snd_plasma');
+    this.cameraShake = 0.15;
+    this.log('💥 Phóng Pháo Năng Lượng (Plasma Blast)!', 'info');
+  }
+
+  // Updates active projectiles, checks impact & triggers radial physics shockwaves
+  updateProjectiles(dt) {
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+      p.life -= dt;
+
+      p.pos.addScaledVector(p.vel, dt);
+      p.mesh.position.copy(p.pos);
+
+      // Glowing plasma trail
+      this.particles3d.plasmaTrail(p.pos.x, p.pos.y, p.pos.z, '#00f0ff');
+
+      // Check collision with floor or obstacles
+      let hit = false;
+      let impactPos = p.pos.clone();
+
+      if (p.pos.y <= 0.2) {
+        hit = true;
+        impactPos.y = 0.1;
+      }
+
+      // Check collision against dynamic actors
+      for (const actor of this.actors) {
+        if (actor.tag === 'player') continue;
+        const apos = actor.transform.position;
+        const dx = p.pos.x - apos.x;
+        const dy = p.pos.y - apos.y;
+        const dz = p.pos.z - apos.z;
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (dist < 1.6) {
+          hit = true;
+          impactPos = p.pos.clone();
+
+          // Detonate explosive barrels
+          if (actor.tag === 'barrel') {
+            this.explodeBarrel(actor);
+          }
+          break;
+        }
+      }
+
+      if (hit || p.life <= 0) {
+        // Explode projectile
+        this.renderer3d.scene.remove(p.mesh);
+        this.projectiles.splice(i, 1);
+
+        if (hit) {
+          this.triggerPlasmaExplosion(impactPos);
+        }
+      }
+    }
+  }
+
+  // Radial Physics Shockwave Explosion
+  triggerPlasmaExplosion(pos) {
+    this.particles3d.explosion(pos.x, pos.y, pos.z);
+    this.particles3d.shockwaveRing(pos.x, pos.y, pos.z, '#00f0ff', 40);
+    this.sound.play('snd_explosion');
+    this.sound.play('snd_shockwave');
+    this.cameraShake = 0.45;
+
+    // Apply radial physical blast impulse to all dynamic Cannon bodies
+    const radius = 8.0;
+    for (const actor of this.actors) {
+      if (actor.physics.enabled && actor.physics.type === 'dynamic' && actor._runtime.cannonBody) {
+        const body = actor._runtime.cannonBody;
+        const diffX = body.position.x - pos.x;
+        const diffY = body.position.y - pos.y;
+        const diffZ = body.position.z - pos.z;
+        const dist = Math.sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
+
+        if (dist < radius && dist > 0.05) {
+          const factor = (1.0 - dist / radius) * 36.0;
+          const forceX = (diffX / dist) * factor;
+          const forceZ = (diffZ / dist) * factor;
+          const forceY = Math.max(12.0, (diffY / dist) * factor + 18.0);
+
+          body.applyImpulse(new CANNON.Vec3(forceX, forceY, forceZ), body.position);
+        }
+      }
+    }
+  }
+
+  // Detonates a hazard barrel with massive blast
+  explodeBarrel(barrel) {
+    const pos = barrel.transform.position;
+    this.particles3d.explosion(pos.x, pos.y + 0.5, pos.z);
+    this.particles3d.burst(pos.x, pos.y + 0.5, pos.z, '#ef4444', 35);
+    this.particles3d.shockwaveRing(pos.x, pos.y, pos.z, '#f59e0b', 45);
+    this.sound.play('snd_explosion');
+    this.sound.play('snd_shockwave');
+    this.cameraShake = 0.6;
+    this.deleteActor(barrel);
+    this.log(`💥 THÙNG NỔ PHÁT HỎA! Phá hủy mục tiêu xung quanh!`, 'success');
   }
 
   updateBehaviors(dt) {
@@ -312,11 +492,11 @@ class NovaEngine3D {
     for (const actor of this.actors) {
       if (!actor.visible) continue;
 
-      // 1. Third-Person Character Controller 3D
+      // 1. Third-Person Character Controller 3D with Articulated Kinematic Rig
       const charBeh = actor.getBehavior('characterController3D');
       if (charBeh) {
-        const speed = charBeh.speed || 8.0;
-        const jumpForce = charBeh.jumpForce || 9.0;
+        const speed = charBeh.speed || 8.5;
+        const jumpForce = charBeh.jumpForce || 9.5;
 
         // Get camera forward & right projected onto horizontal ground XZ
         const forward = new THREE.Vector3();
@@ -332,7 +512,11 @@ class NovaEngine3D {
         if (this.isKeyDown('KeyA') || this.isKeyDown('ArrowLeft')) moveDir.addScaledVector(right, -1);
         if (this.isKeyDown('KeyD') || this.isKeyDown('ArrowRight')) moveDir.add(right);
 
-        if (moveDir.lengthSq() > 0.001) {
+        const isMoving = moveDir.lengthSq() > 0.001;
+        const body = actor._runtime.cannonBody;
+        const isGrounded = body ? (actor.physics.grounded || Math.abs(body.velocity.y) < 0.25) : true;
+
+        if (isMoving) {
           moveDir.normalize();
 
           // Smoothly rotate character to face movement direction
@@ -340,7 +524,6 @@ class NovaEngine3D {
           actor.transform.rotation.y = EngineMath.radToDeg(targetAngle);
 
           // Apply velocity via Cannon body
-          const body = actor._runtime.cannonBody;
           if (body) {
             body.velocity.x = moveDir.x * speed;
             body.velocity.z = moveDir.z * speed;
@@ -349,20 +532,77 @@ class NovaEngine3D {
             actor.transform.position.z += moveDir.z * speed * dt;
           }
         } else {
-          const body = actor._runtime.cannonBody;
           if (body) {
-            body.velocity.x *= 0.85;
-            body.velocity.z *= 0.85;
+            body.velocity.x *= 0.82;
+            body.velocity.z *= 0.82;
           }
         }
 
         // Jump
         if (this.isKeyPressed('Space')) {
-          const body = actor._runtime.cannonBody;
-          if (body && (actor.physics.grounded || Math.abs(body.velocity.y) < 0.2)) {
+          if (body && isGrounded) {
             body.velocity.y = jumpForce;
             this.sound.play('snd_jump');
             this.particles3d.jumpDust(actor.transform.position.x, actor.transform.position.y, actor.transform.position.z);
+          }
+        }
+
+        // --- ARTICULATED UE4 SKELETAL RIG ANIMATION ---
+        const mesh = actor._runtime.threeMesh;
+        if (mesh && mesh.userData && mesh.userData.rig) {
+          const rig = mesh.userData.rig;
+          if (!actor._runtime.anim) {
+            actor._runtime.anim = { walkTimer: 0, idleTimer: 0, stepTimer: 0 };
+          }
+          const anim = actor._runtime.anim;
+
+          if (!isGrounded) {
+            // In-Air / Falling / Jumping
+            rig.legL.rotation.x = THREE.MathUtils.lerp(rig.legL.rotation.x, -0.45, 0.25);
+            rig.legR.rotation.x = THREE.MathUtils.lerp(rig.legR.rotation.x, 0.45, 0.25);
+            rig.armL.rotation.x = THREE.MathUtils.lerp(rig.armL.rotation.x, -0.7, 0.25);
+            rig.armR.rotation.x = THREE.MathUtils.lerp(rig.armR.rotation.x, -0.7, 0.25);
+            rig.torsoGroup.position.y = 1.05;
+            // Thrusters flare up with cyan bloom
+            rig.thrusterL.material.emissiveIntensity = 4.2;
+            if (Math.random() < 0.4) {
+              this.particles3d.emit({
+                origin: { x: actor.transform.position.x, y: actor.transform.position.y + 0.6, z: actor.transform.position.z },
+                color: '#00f0ff',
+                count: 2,
+                speed: 1.2,
+                gravity: 0,
+                size: 0.3
+              });
+            }
+          } else if (isMoving) {
+            // Running Gait
+            anim.walkTimer += dt * 15.0;
+            anim.stepTimer += dt;
+            if (anim.stepTimer > 0.32) {
+              anim.stepTimer = 0;
+              this.sound.play('snd_step');
+            }
+
+            rig.legL.rotation.x = Math.sin(anim.walkTimer) * 0.75;
+            rig.legR.rotation.x = -Math.sin(anim.walkTimer) * 0.75;
+            rig.armL.rotation.x = -Math.sin(anim.walkTimer) * 0.65;
+            rig.armR.rotation.x = Math.sin(anim.walkTimer) * 0.65;
+            rig.torsoGroup.position.y = 1.05 + Math.abs(Math.sin(anim.walkTimer)) * 0.12;
+            rig.torsoGroup.rotation.x = 0.15; // Forward lean
+            rig.torsoGroup.rotation.z = Math.sin(anim.walkTimer) * 0.05; // Hip sway
+            rig.thrusterL.material.emissiveIntensity = 2.0;
+          } else {
+            // Idle Breathing
+            anim.idleTimer += dt * 2.8;
+            rig.legL.rotation.x = THREE.MathUtils.lerp(rig.legL.rotation.x, 0, 0.15);
+            rig.legR.rotation.x = THREE.MathUtils.lerp(rig.legR.rotation.x, 0, 0.15);
+            rig.armL.rotation.x = Math.sin(anim.idleTimer) * 0.08;
+            rig.armR.rotation.x = -Math.sin(anim.idleTimer) * 0.08;
+            rig.torsoGroup.position.y = 1.05 + Math.sin(anim.idleTimer) * 0.03;
+            rig.torsoGroup.rotation.x = THREE.MathUtils.lerp(rig.torsoGroup.rotation.x, 0, 0.15);
+            rig.torsoGroup.rotation.z = 0;
+            rig.thrusterL.material.emissiveIntensity = 1.2 + Math.sin(anim.idleTimer * 2) * 0.6;
           }
         }
       }
@@ -411,8 +651,12 @@ class NovaEngine3D {
     }
   }
 
-  // Handle 3D Collisions
+  // Handle 3D Collisions & Jump Pads
   handleCollision3D(actorA, actorB) {
+    // Check Jump Pad trigger
+    this.checkJumpPad3D(actorA, actorB);
+    this.checkJumpPad3D(actorB, actorA);
+
     // Check collectible
     this.checkCollectible3D(actorA, actorB);
     this.checkCollectible3D(actorB, actorA);
@@ -423,6 +667,19 @@ class NovaEngine3D {
     }
     if (actorB._runtime.customInstance && actorB._runtime.customInstance.onCollision) {
       actorB._runtime.customInstance.onCollision(actorB, actorA, this);
+    }
+  }
+
+  // Triggers launch when stepping on an Unreal Jump Pad
+  checkJumpPad3D(target, pad) {
+    if (pad.tag === 'jumppad' && target._runtime?.cannonBody) {
+      const body = target._runtime.cannonBody;
+      body.velocity.y = 22.0;
+      this.sound.play('snd_bounce');
+      const pos = pad.transform.position;
+      this.particles3d.shockwaveRing(pos.x, pos.y + 0.3, pos.z, '#00f0ff', 35);
+      this.cameraShake = 0.25;
+      this.log(`🚀 BỆ PHÓNG KÍCH HOẠT! Bắn vút lên không trung!`, 'success');
     }
   }
 

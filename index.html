@@ -81,9 +81,21 @@
               <span class="icon">⬜</span>
               <span>Mặt Đất</span>
             </button>
+            <button class="place-actor-btn" data-spawn-actor="crate">
+              <span class="icon">📦</span>
+              <span>Thùng Hazard</span>
+            </button>
+            <button class="place-actor-btn" data-spawn-actor="jumppad">
+              <span class="icon">🚀</span>
+              <span>Bệ Phóng</span>
+            </button>
+            <button class="place-actor-btn" data-spawn-actor="barrel">
+              <span class="icon">🛢️</span>
+              <span>Thùng Nổ</span>
+            </button>
             <button class="place-actor-btn" data-spawn-actor="gem">
               <span class="icon">💎</span>
-              <span>Ngọc Bay</span>
+              <span>Tinh Thể</span>
             </button>
           </div>
 
@@ -104,11 +116,13 @@
           <div class="ue4-tool-group">
             <span class="ue4-tool-btn active">Perspective</span>
             <select id="view-mode-select" class="ue4-tool-btn" style="background: transparent;">
-              <option value="lit">Lit (PBR & Đổ Bóng)</option>
+              <option value="lit">Lit (PBR + IBL + Bloom)</option>
+              <option value="lightingOnly">Lighting Only (Đất Sét Trắng / Clay)</option>
               <option value="unlit">Unlit (Không Ánh Sáng)</option>
               <option value="wireframe">Wireframe (Khung Dây)</option>
             </select>
             <button id="toggle-grid" class="ue4-tool-btn active">Lưới</button>
+            <button id="toggle-stats" class="ue4-tool-btn active" title="Bật/Tắt Thống Kê Unreal STAT">STAT</button>
           </div>
 
           <!-- Transform Gizmo Mode (W, E, R) -->
@@ -118,7 +132,7 @@
             <button id="tool-scale" class="ue4-tool-btn" title="Thu Phóng (Phím R)">⤢ Kéo Giãn (R)</button>
           </div>
 
-          <!-- Snapping & Camera Speed -->
+          <!-- Snapping & Camera Speed & Combat Hint -->
           <div class="ue4-tool-group">
             <select id="snap-trans-select" class="ue4-tool-btn" style="background: transparent;">
               <option value="1.0">Snap: 1.0m</option>
@@ -129,12 +143,25 @@
             <span style="font-size: 10px; color: var(--text-muted);">Cam:</span>
             <input type="range" id="cam-speed-slider" min="1" max="8" value="4" style="width: 50px;">
             <span id="cam-speed-val" style="font-size: 10px; color: var(--text-muted); min-width: 20px;">4x</span>
+            <span class="ue4-tool-btn combat-hint" style="color: var(--ue-cyan); font-size: 10px; cursor: default; background: rgba(0, 240, 255, 0.1);">⚡ Chuột/F: Bắn Plasma</span>
           </div>
         </div>
 
         <!-- 3D Canvas -->
         <div class="canvas-container">
           <canvas id="viewport-3d-canvas"></canvas>
+
+          <!-- Unreal Engine Viewport STAT HUD Overlay -->
+          <div id="ue-stat-overlay" class="ue-stat-overlay">
+            <div class="stat-line"><span class="stat-label">STAT FPS:</span> <span id="stat-fps-val" class="stat-val-green">60.0</span> (<span id="stat-ms-val">16.6 ms</span>)</div>
+            <div class="stat-line"><span class="stat-label">ACTORS:</span> <span id="stat-actors-val" class="stat-val-white">16</span> | <span class="stat-label">DRAWS:</span> <span id="stat-draws-val" class="stat-val-white">24</span></div>
+            <div class="stat-line"><span class="stat-label">PIPELINE:</span> <span class="stat-val-cyan">ACES + IBL + Bloom</span></div>
+          </div>
+
+          <!-- Unreal Viewport Orientation Cube -->
+          <div id="ue-view-cube" class="ue-view-cube" title="Góc Nhìn View Cube">
+            <div class="cube-face cube-front">TOP</div>
+          </div>
         </div>
       </main>
 

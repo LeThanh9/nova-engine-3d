@@ -69,10 +69,13 @@ class Renderer3D {
     // 4. UnrealBloomPass Post-Processing Pipeline
     this.setupPostProcessing();
 
-    // 5. Procedural Textures for Materials
+    // 5. Procedural Textures & Normal Maps for Materials
     this.generateProceduralTextures();
 
-    // 6. Sky & Atmospheric Stars
+    // 5b. High-End Image Based Lighting (IBL Environment Map)
+    this.setupEnvironmentMap();
+
+    // 6. Sky, Atmospheric Stars & Volumetric Dust Motes
     this.setupAtmosphere();
 
     // 7. Lighting Pipeline (Sun, Rim, Hemisphere)
@@ -109,21 +112,21 @@ class Renderer3D {
   }
 
   generateProceduralTextures() {
-    // 1. Sci-Fi Hexagonal Cyber Floor Texture
+    // 1. Sci-Fi Hexagonal Cyber Floor Texture (Diffuse)
     const hexCanvas = document.createElement('canvas');
     hexCanvas.width = 512;
     hexCanvas.height = 512;
     const hctx = hexCanvas.getContext('2d');
 
-    hctx.fillStyle = '#141c2c';
+    hctx.fillStyle = '#111827';
     hctx.fillRect(0, 0, 512, 512);
 
-    // Draw Hex Grid
+    // Draw Hex Grid with high-contrast bevels
     const r = 32;
     const dx = r * 3;
     const dy = r * Math.sqrt(3);
-    hctx.strokeStyle = '#1e2d4a';
-    hctx.lineWidth = 2;
+    hctx.strokeStyle = '#1e293b';
+    hctx.lineWidth = 3;
 
     for (let y = -dy; y < 512 + dy; y += dy) {
       for (let x = -dx; x < 512 + dx; x += dx) {
@@ -133,8 +136,8 @@ class Renderer3D {
     }
 
     // Glowing circuit accents
-    hctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
-    hctx.lineWidth = 1.5;
+    hctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+    hctx.lineWidth = 2;
     hctx.strokeRect(64, 64, 384, 384);
 
     const hexTex = new THREE.CanvasTexture(hexCanvas);
@@ -143,14 +146,21 @@ class Renderer3D {
     hexTex.repeat.set(6, 6);
     this.textures['scifi_hex'] = hexTex;
 
-    // 2. Metal Panel Crate Texture
+    // 1b. Procedural Normal Map for Hex Floor
+    const hexNormalTex = this.generateNormalMapFromCanvas(hexCanvas, 1.8);
+    hexNormalTex.wrapS = THREE.RepeatWrapping;
+    hexNormalTex.wrapT = THREE.RepeatWrapping;
+    hexNormalTex.repeat.set(6, 6);
+    this.textures['scifi_hex_normal'] = hexNormalTex;
+
+    // 2. Metal Panel Crate Texture (Diffuse)
     const crateCanvas = document.createElement('canvas');
     crateCanvas.width = 256;
     crateCanvas.height = 256;
     const cctx = crateCanvas.getContext('2d');
     cctx.fillStyle = '#eab308';
     cctx.fillRect(0, 0, 256, 256);
-    // Dark border
+    // Dark border & inner rivets
     cctx.strokeStyle = '#854d0e';
     cctx.lineWidth = 14;
     cctx.strokeRect(7, 7, 242, 242);
@@ -166,6 +176,162 @@ class Renderer3D {
     }
     const crateTex = new THREE.CanvasTexture(crateCanvas);
     this.textures['hazard_crate'] = crateTex;
+
+    // 2b. Procedural Normal Map for Crate
+    this.textures['hazard_crate_normal'] = this.generateNormalMapFromCanvas(crateCanvas, 2.2);
+
+    // 3. Unreal Jump Pad Texture (Concentric Neon Chevrons)
+    const padCanvas = document.createElement('canvas');
+    padCanvas.width = 256;
+    padCanvas.height = 256;
+    const pctx = padCanvas.getContext('2d');
+    pctx.fillStyle = '#0f172a';
+    pctx.fillRect(0, 0, 256, 256);
+    pctx.strokeStyle = '#00f0ff';
+    pctx.lineWidth = 8;
+    pctx.strokeRect(10, 10, 236, 236);
+
+    // Glowing Arrow Chevrons
+    pctx.fillStyle = '#00f0ff';
+    for (let y = 60; y <= 180; y += 50) {
+      pctx.beginPath();
+      pctx.moveTo(128, y - 25);
+      pctx.lineTo(190, y + 20);
+      pctx.lineTo(165, y + 20);
+      pctx.lineTo(128, y - 5);
+      pctx.lineTo(91, y + 20);
+      pctx.lineTo(66, y + 20);
+      pctx.closePath();
+      pctx.fill();
+    }
+    this.textures['jump_pad'] = new THREE.CanvasTexture(padCanvas);
+
+    // 4. Explosive Hazard Barrel Texture (Crimson + Skull/Flame)
+    const barrelCanvas = document.createElement('canvas');
+    barrelCanvas.width = 256;
+    barrelCanvas.height = 256;
+    const bctx = barrelCanvas.getContext('2d');
+    bctx.fillStyle = '#dc2626';
+    bctx.fillRect(0, 0, 256, 256);
+    // Dark metal rings
+    bctx.fillStyle = '#1e293b';
+    bctx.fillRect(0, 20, 256, 25);
+    bctx.fillRect(0, 115, 256, 25);
+    bctx.fillRect(0, 210, 256, 25);
+    // Yellow Warning Band
+    bctx.fillStyle = '#fbbf24';
+    bctx.fillRect(0, 65, 256, 40);
+    bctx.fillStyle = '#000';
+    bctx.font = 'bold 22px sans-serif';
+    bctx.textAlign = 'center';
+    bctx.fillText('⚠ DANGER ⚠', 128, 93);
+    this.textures['hazard_barrel'] = new THREE.CanvasTexture(barrelCanvas);
+  }
+
+  // Generates real tangent-space Normal Maps from any 2D canvas height/color map!
+  generateNormalMapFromCanvas(srcCanvas, intensity = 1.5) {
+    const w = srcCanvas.width;
+    const h = srcCanvas.height;
+    const srcCtx = srcCanvas.getContext('2d');
+    const srcData = srcCtx.getImageData(0, 0, w, h).data;
+
+    const nCanvas = document.createElement('canvas');
+    nCanvas.width = w;
+    nCanvas.height = h;
+    const nCtx = nCanvas.getContext('2d');
+    const nImgData = nCtx.createImageData(w, h);
+    const nData = nImgData.data;
+
+    const getLum = (x, y) => {
+      x = (x + w) % w;
+      y = (y + h) % h;
+      const idx = (y * w + x) * 4;
+      return (srcData[idx] * 0.299 + srcData[idx + 1] * 0.587 + srcData[idx + 2] * 0.114) / 255.0;
+    };
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const tl = getLum(x - 1, y - 1);
+        const t  = getLum(x, y - 1);
+        const tr = getLum(x + 1, y - 1);
+        const l  = getLum(x - 1, y);
+        const r  = getLum(x + 1, y);
+        const bl = getLum(x - 1, y + 1);
+        const b  = getLum(x, y + 1);
+        const br = getLum(x + 1, y + 1);
+
+        const dx = (tr + 2 * r + br) - (tl + 2 * l + bl);
+        const dy = (bl + 2 * b + br) - (tl + 2 * t + tr);
+        const dz = 1.0 / (intensity * 2.0);
+
+        const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        const nx = (dx / len) * 0.5 + 0.5;
+        const ny = (dy / len) * 0.5 + 0.5;
+        const nz = (dz / len) * 0.5 + 0.5;
+
+        const idx = (y * w + x) * 4;
+        nData[idx] = Math.round(nx * 255);
+        nData[idx + 1] = Math.round(ny * 255);
+        nData[idx + 2] = Math.round(nz * 255);
+        nData[idx + 3] = 255;
+      }
+    }
+
+    nCtx.putImageData(nImgData, 0, 0);
+    return new THREE.CanvasTexture(nCanvas);
+  }
+
+  // Unreal Engine IBL: Realistic image-based ambient reflections on metals and glass
+  setupEnvironmentMap() {
+    try {
+      const width = 512;
+      const height = 256;
+      const envCanvas = document.createElement('canvas');
+      envCanvas.width = width;
+      envCanvas.height = height;
+      const ctx = envCanvas.getContext('2d');
+
+      // Atmospheric Sky to Horizon Gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, height);
+      grad.addColorStop(0.0, '#040714');
+      grad.addColorStop(0.42, '#0f172a');
+      grad.addColorStop(0.49, '#1e293b');
+      grad.addColorStop(0.50, '#38bdf8'); // Cyan horizon line
+      grad.addColorStop(0.53, '#0f172a');
+      grad.addColorStop(1.0, '#020617');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Studio Sunlight Highlight
+      const sunGrad = ctx.createRadialGradient(width * 0.65, height * 0.28, 0, width * 0.65, height * 0.28, 70);
+      sunGrad.addColorStop(0, '#ffffff');
+      sunGrad.addColorStop(0.2, '#fff7ed');
+      sunGrad.addColorStop(0.6, 'rgba(255, 200, 120, 0.35)');
+      sunGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(width * 0.65, height * 0.28, 70, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cyan Studio Reflector Strip
+      const rimGrad = ctx.createLinearGradient(0, height * 0.35, 0, height * 0.65);
+      rimGrad.addColorStop(0, 'rgba(0, 240, 255, 0)');
+      rimGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.45)');
+      rimGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
+      ctx.fillStyle = rimGrad;
+      ctx.fillRect(width * 0.12, height * 0.35, width * 0.22, height * 0.3);
+
+      const envTex = new THREE.CanvasTexture(envCanvas);
+      if (typeof THREE.PMREMGenerator !== 'undefined') {
+        const pmrem = new THREE.PMREMGenerator(this.renderer);
+        pmrem.compileEquirectangularShader();
+        const envRT = pmrem.fromEquirectangular(envTex);
+        this.scene.environment = envRT.texture;
+        pmrem.dispose();
+      }
+    } catch (e) {
+      console.warn('[NovaEngine] IBL setup fallback:', e);
+    }
   }
 
   drawHex(ctx, x, y, r) {
@@ -182,8 +348,8 @@ class Renderer3D {
   }
 
   setupAtmosphere() {
-    // Background Stars Sphere
-    const starCount = 300;
+    // 1. Background Cosmic Stars
+    const starCount = 350;
     const starGeom = new THREE.BufferGeometry();
     const starPos = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
@@ -217,6 +383,34 @@ class Renderer3D {
 
     const stars = new THREE.Points(starGeom, starMat);
     this.scene.add(stars);
+
+    // 2. Unreal Engine Volumetric Dust Motes floating in the light
+    const moteCount = 120;
+    const moteGeom = new THREE.BufferGeometry();
+    const motePos = new Float32Array(moteCount * 3);
+    this.moteData = [];
+
+    for (let i = 0; i < moteCount; i++) {
+      motePos[i * 3] = (Math.random() - 0.5) * 55;
+      motePos[i * 3 + 1] = Math.random() * 12 + 0.5;
+      motePos[i * 3 + 2] = (Math.random() - 0.5) * 55;
+      this.moteData.push({
+        baseY: motePos[i * 3 + 1],
+        speed: 0.6 + Math.random() * 0.9,
+        offset: Math.random() * Math.PI * 2
+      });
+    }
+
+    moteGeom.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
+    const moteMat = new THREE.PointsMaterial({
+      size: 0.45,
+      color: '#38bdf8',
+      transparent: true,
+      opacity: 0.7,
+      blending: THREE.AdditiveBlending
+    });
+    this.motePoints = new THREE.Points(moteGeom, moteMat);
+    this.scene.add(this.motePoints);
   }
 
   setupLighting() {
@@ -422,12 +616,27 @@ class Renderer3D {
   }
 
   buildMeshFromActor(actor) {
-    // 1. Stylized Sci-Fi Character Mesh (Unreal Hero Robot)
+    // 1. Stylized Sci-Fi Character Mesh (Unreal Hero Robot Mannequin)
     if (actor.tag === 'player' || actor.shape === 'character') {
       return this.buildCharacterMesh(actor);
     }
 
-    // 2. Lights
+    // 2. High-Tech Jump Pad Actor
+    if (actor.tag === 'jumppad') {
+      return this.buildJumpPadMesh(actor);
+    }
+
+    // 3. Explosive Hazard Barrel Actor
+    if (actor.tag === 'barrel') {
+      return this.buildHazardBarrelMesh(actor);
+    }
+
+    // 4. Floating Energy Crystal
+    if (actor.tag === 'crystal' || actor.hasBehavior?.('collectible3D')) {
+      return this.buildCrystalMesh(actor);
+    }
+
+    // 5. Dynamic Lights
     if (actor.shape === 'light') {
       return this.createLightActor(actor);
     }
@@ -477,16 +686,16 @@ class Renderer3D {
     return mesh;
   }
 
-  // Builds a futuristic Sci-Fi Robot Model (Unreal Style Mannequin)
+  // Builds an Articulated Sci-Fi Robot Mannequin (Unreal Engine 4 Hero Rig)
   buildCharacterMesh(actor) {
     const group = new THREE.Group();
     group.isCharacterGroup = true;
 
-    // Body Material (Dark metallic titanium)
+    // Body Armor Material (Dark Metallic Titanium with specular sheen)
     const armorMat = new THREE.MeshStandardMaterial({
       color: '#1e293b',
-      metalness: 0.85,
-      roughness: 0.25
+      metalness: 0.88,
+      roughness: 0.22
     });
 
     // Visor / Core Neon Emissive Material (Unreal Glowing Cyan)
@@ -498,62 +707,205 @@ class Renderer3D {
       metalness: 0.5
     });
 
-    // 1. Torso
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.2, 0.7), armorMat);
-    torso.position.y = 1.0;
+    // Joint Accents
+    const jointMat = new THREE.MeshStandardMaterial({
+      color: '#475569',
+      metalness: 0.95,
+      roughness: 0.15
+    });
+
+    // 1. Torso Group
+    const torsoGroup = new THREE.Group();
+    torsoGroup.position.set(0, 1.05, 0);
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.1, 0.65), armorMat);
     torso.castShadow = true;
-    group.add(torso);
+    torsoGroup.add(torso);
 
     // Glowing Chest Reactor
-    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.15, 16), neonMat);
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16), neonMat);
     core.rotateX(Math.PI / 2);
-    core.position.set(0, 1.1, 0.38);
-    group.add(core);
+    core.position.set(0, 0.12, 0.35);
+    torsoGroup.add(core);
 
-    // 2. Helmet Head
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.65, 0.65), armorMat);
-    head.position.y = 1.95;
+    // 2. Head Group
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 0.9, 0);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), armorMat);
     head.castShadow = true;
-    group.add(head);
+    headGroup.add(head);
 
-    // Glowing Curved Visor
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.2, 0.1), neonMat);
-    visor.position.set(0, 1.95, 0.34);
-    group.add(visor);
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.18, 0.1), neonMat);
+    visor.position.set(0, 0.02, 0.32);
+    headGroup.add(visor);
 
-    // 3. Shoulders & Arms
-    const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), armorMat);
-    shoulderL.position.set(-0.7, 1.4, 0);
-    const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), armorMat);
-    shoulderR.position.set(0.7, 1.4, 0);
-    group.add(shoulderL, shoulderR);
+    torsoGroup.add(headGroup);
 
-    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.8, 16), armorMat);
-    armL.position.set(-0.7, 0.9, 0);
-    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.8, 16), armorMat);
-    armR.position.set(0.7, 0.9, 0);
-    group.add(armL, armR);
+    // 3. Shoulders & Arms (Pivot at shoulder joint for running animation)
+    const armLGroup = new THREE.Group();
+    armLGroup.position.set(-0.65, 0.35, 0);
+    const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), jointMat);
+    armLGroup.add(shoulderL);
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.75, 16), armorMat);
+    armL.position.set(0, -0.4, 0);
+    armL.castShadow = true;
+    armLGroup.add(armL);
+    torsoGroup.add(armLGroup);
 
-    // 4. Jetpack with Thrusters
-    const jetpack = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.3), armorMat);
-    jetpack.position.set(0, 1.1, -0.45);
-    const thrusterL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.3, 16), neonMat);
-    thrusterL.position.set(-0.2, 0.65, -0.45);
-    const thrusterR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.3, 16), neonMat);
-    thrusterR.position.set(0.2, 0.65, -0.45);
-    group.add(jetpack, thrusterL, thrusterR);
+    const armRGroup = new THREE.Group();
+    armRGroup.position.set(0.65, 0.35, 0);
+    const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), jointMat);
+    armRGroup.add(shoulderR);
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.11, 0.75, 16), armorMat);
+    armR.position.set(0, -0.4, 0);
+    armR.castShadow = true;
+    armRGroup.add(armR);
+    torsoGroup.add(armRGroup);
 
-    // 5. Legs
-    const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.9, 16), armorMat);
-    legL.position.set(-0.3, 0.45, 0);
-    const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.9, 16), armorMat);
-    legR.position.set(0.3, 0.45, 0);
-    group.add(legL, legR);
+    // 4. Jetpack on Torso back
+    const jetpack = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.7, 0.28), armorMat);
+    jetpack.position.set(0, 0.05, -0.42);
+    torsoGroup.add(jetpack);
+
+    const thrusterL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.25, 16), neonMat);
+    thrusterL.position.set(-0.18, -0.35, -0.42);
+    const thrusterR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.25, 16), neonMat);
+    thrusterR.position.set(0.18, -0.35, -0.42);
+    torsoGroup.add(thrusterL, thrusterR);
+
+    group.add(torsoGroup);
+
+    // 5. Legs & Hips (Pivot at hip joint for stride animation)
+    const legLGroup = new THREE.Group();
+    legLGroup.position.set(-0.28, 0.9, 0);
+    const hipL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), jointMat);
+    legLGroup.add(hipL);
+    const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 0.85, 16), armorMat);
+    legL.position.set(0, -0.45, 0);
+    legL.castShadow = true;
+    legLGroup.add(legL);
+    const footL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.35), armorMat);
+    footL.position.set(0, -0.88, 0.08);
+    legLGroup.add(footL);
+    group.add(legLGroup);
+
+    const legRGroup = new THREE.Group();
+    legRGroup.position.set(0.28, 0.9, 0);
+    const hipR = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), jointMat);
+    legRGroup.add(hipR);
+    const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 0.85, 16), armorMat);
+    legR.position.set(0, -0.45, 0);
+    legR.castShadow = true;
+    legRGroup.add(legR);
+    const footR = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.35), armorMat);
+    footR.position.set(0, -0.88, 0.08);
+    legRGroup.add(footR);
+    group.add(legRGroup);
+
+    // Expose rig for procedural animations in core3d.js
+    group.userData.rig = {
+      torsoGroup,
+      headGroup,
+      armL: armLGroup,
+      armR: armRGroup,
+      legL: legLGroup,
+      legR: legRGroup,
+      thrusterL,
+      thrusterR,
+      core,
+      neonMat
+    };
+
+    return group;
+  }
+
+  // Builds a futuristic Sci-Fi Launch / Jump Pad
+  buildJumpPadMesh(actor) {
+    const group = new THREE.Group();
+    const dims = actor.dimensions || { width: 3, height: 0.4, depth: 3 };
+
+    // Metallic Base Platform
+    const baseMat = new THREE.MeshStandardMaterial({
+      color: '#1e293b',
+      metalness: 0.9,
+      roughness: 0.2
+    });
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(dims.width / 2, dims.width / 2 + 0.3, dims.height, 16), baseMat);
+    base.receiveShadow = true;
+    group.add(base);
+
+    // Glowing Neon Pad Center
+    const neonPadMat = new THREE.MeshStandardMaterial({
+      color: '#00f0ff',
+      emissive: '#00f0ff',
+      emissiveIntensity: 2.2,
+      roughness: 0.1
+    });
+    if (this.textures['jump_pad']) {
+      neonPadMat.map = this.textures['jump_pad'];
+    }
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(dims.width / 2 - 0.25, dims.width / 2 - 0.25, dims.height + 0.05, 16), neonPadMat);
+    pad.receiveShadow = true;
+    group.add(pad);
+
+    return group;
+  }
+
+  // Builds an Explosive Metal Hazard Barrel
+  buildHazardBarrelMesh(actor) {
+    const group = new THREE.Group();
+    const dims = actor.dimensions || { radius: 0.7, height: 1.8 };
+
+    const barrelMat = new THREE.MeshStandardMaterial({
+      color: '#ef4444',
+      metalness: 0.8,
+      roughness: 0.3
+    });
+    if (this.textures['hazard_barrel']) {
+      barrelMat.map = this.textures['hazard_barrel'];
+    }
+
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(dims.radius, dims.radius, dims.height, 24), barrelMat);
+    barrel.castShadow = true;
+    barrel.receiveShadow = true;
+    group.add(barrel);
+
+    return group;
+  }
+
+  // Builds a floating multi-faceted energy crystal
+  buildCrystalMesh(actor) {
+    const group = new THREE.Group();
+    const crystalMat = new THREE.MeshStandardMaterial({
+      color: actor.material?.color || '#ffea00',
+      emissive: actor.material?.color || '#ffea00',
+      emissiveIntensity: 2.0,
+      metalness: 0.2,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.88
+    });
+
+    const geom = new THREE.OctahedronGeometry(actor.dimensions?.radius || 0.8, 0);
+    const mesh = new THREE.Mesh(geom, crystalMat);
+    mesh.castShadow = true;
+    group.add(mesh);
 
     return group;
   }
 
   createPBRMaterial(actor) {
+    // Unreal Engine 'Lighting Only' Viewport Mode (Neutral White Clay)
+    if (this.viewMode === 'lightingOnly') {
+      return new THREE.MeshStandardMaterial({
+        color: '#e2e8f0',
+        metalness: 0.0,
+        roughness: 0.85,
+        wireframe: false
+      });
+    }
+
     const mat = new THREE.MeshStandardMaterial({
       color: actor.material.color,
       metalness: actor.material.metalness,
@@ -565,12 +917,19 @@ class Renderer3D {
       transparent: actor.material.transparent || actor.material.opacity < 1.0
     });
 
-    // Assign procedural PBR texture if matching
+    // Assign procedural PBR diffuse & normal maps
     if (actor.shape === 'plane' && this.textures['scifi_hex']) {
       mat.map = this.textures['scifi_hex'];
-      mat.roughnessMap = this.textures['scifi_hex'];
+      if (this.textures['scifi_hex_normal']) {
+        mat.normalMap = this.textures['scifi_hex_normal'];
+        mat.normalScale = new THREE.Vector2(1.2, 1.2);
+      }
     } else if (actor.tag === 'crate' && this.textures['hazard_crate']) {
       mat.map = this.textures['hazard_crate'];
+      if (this.textures['hazard_crate_normal']) {
+        mat.normalMap = this.textures['hazard_crate_normal'];
+        mat.normalScale = new THREE.Vector2(1.5, 1.5);
+      }
     }
 
     return mat;
@@ -643,6 +1002,18 @@ class Renderer3D {
 
     if (!this.engine.isPlaying && this.orbitControls && !this.isFreeflying) {
       this.orbitControls.update();
+    }
+
+    // Animate Unreal Engine Volumetric Dust Motes
+    if (this.motePoints && this.moteData) {
+      const time = performance.now() * 0.001;
+      const pos = this.motePoints.geometry.attributes.position.array;
+      for (let i = 0; i < this.moteData.length; i++) {
+        const d = this.moteData[i];
+        pos[i * 3 + 1] = d.baseY + Math.sin(time * d.speed + d.offset) * 0.5;
+        pos[i * 3] += Math.sin(time * 0.2 + d.offset) * 0.008;
+      }
+      this.motePoints.geometry.attributes.position.needsUpdate = true;
     }
 
     // Render with UnrealBloomPass Post-Processing
