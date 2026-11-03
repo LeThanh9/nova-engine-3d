@@ -132,6 +132,38 @@ class ParticleSystem3D {
     }
   }
 
+  // GTA 6 Realistic Tire Drift Smoke
+  driftSmoke(x, y, z) {
+    this.emit({
+      origin: {
+        x: x + (Math.random() - 0.5) * 0.4,
+        y: y + 0.1,
+        z: z + (Math.random() - 0.5) * 0.4
+      },
+      color: '#e2e8f0',
+      count: 4,
+      speed: 1.8,
+      upward: 1.2,
+      life: 0.65,
+      size: 0.9,
+      gravity: -0.4
+    });
+  }
+
+  // GTA 6 Supercar Nitro / Exhaust Flame Burst
+  exhaustFlame(x, y, z, dirX = 0, dirZ = -1) {
+    this.emit({
+      origin: { x, y, z },
+      color: Math.random() > 0.3 ? '#00f0ff' : '#f59e0b',
+      count: 3,
+      speed: 3.5,
+      upward: 0.3,
+      life: 0.2,
+      size: 0.35,
+      gravity: 0.0
+    });
+  }
+
   // Glowing Plasma Bullet Particle Trail
   plasmaTrail(x, y, z, color = '#00f0ff') {
     this.emit({

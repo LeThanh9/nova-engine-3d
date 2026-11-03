@@ -146,6 +146,62 @@ class SoundEngine {
       decay: 0.06,
       volume: 0.25
     });
+
+    // --- GTA 6 Open World Vehicle & City Sound FX ---
+    this.sounds.set('snd_engine', {
+      name: 'Động Cơ Siêu Xe (V8 Engine)',
+      type: 'engine',
+      wave: 'sawtooth',
+      startFreq: 110,
+      endFreq: 340,
+      attack: 0.05,
+      decay: 0.35,
+      volume: 0.45
+    });
+
+    this.sounds.set('snd_screech', {
+      name: 'Rít Lốp Xe (Tire Drift Screech)',
+      type: 'noise',
+      wave: 'noise',
+      startFreq: 800,
+      endFreq: 300,
+      attack: 0.02,
+      decay: 0.25,
+      volume: 0.5
+    });
+
+    this.sounds.set('snd_horn', {
+      name: 'Còi Xe (Car Horn)',
+      type: 'coin',
+      wave: 'triangle',
+      startFreq: 440,
+      endFreq: 440,
+      attack: 0.01,
+      decay: 0.4,
+      volume: 0.6
+    });
+
+    this.sounds.set('snd_siren', {
+      name: 'Còi Cảnh Sát (Police Siren)',
+      type: 'coin',
+      wave: 'sawtooth',
+      startFreq: 650,
+      endFreq: 950,
+      attack: 0.05,
+      decay: 0.45,
+      volume: 0.55
+    });
+
+    this.sounds.set('snd_car_door', {
+      name: 'Đóng/Mở Cửa Xe (Car Door)',
+      type: 'hit',
+      wave: 'square',
+      startFreq: 120,
+      endFreq: 40,
+      attack: 0.01,
+      decay: 0.15,
+      volume: 0.5
+    });
   }
 
   // Play a sound by ID or parameter config

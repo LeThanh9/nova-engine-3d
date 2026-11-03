@@ -91,6 +91,40 @@ class AGYCopilot {
   executeCommand(prompt) {
     const p = prompt.toLowerCase();
 
+    // 0a. GTA 6 Vice City Open World Mode
+    if (p.includes('gta') || p.includes('vice city')) {
+      this.engine.loadTemplate('gta6_vice_city');
+      return '🌴 **ĐÃ TẢI THẾ GIỚI MỞ GTA 6 VICE CITY NEXT-GEN!**\n- Đại lộ Ocean Drive chạy dọc bờ biển Biscayne Bay rì rào sóng vỗ.\n- Hàng dừa nhiệt đới đung đưa trong gió biển.\n- Khách sạn phong cách Art-Deco đèn neon rực rỡ.\n- Có sẵn siêu xe **Pegassi Infernus** và **Grotti Turismo** sẵn sàng để bạn nhấn **[F] để lái và drift lốp bốc khói**!';
+    }
+
+    // 0b. Spawn Supercar
+    if (p.includes('siêu xe') || p.includes('xe') || p.includes('car') || p.includes('supercar')) {
+      const player = this.engine.actors.find(a => a.tag === 'player');
+      const px = player ? player.transform.position.x + 3 : 0;
+      const pz = player ? player.transform.position.z + 4 : 0;
+
+      const colors = ['#00d2ff', '#ff1744', '#facc15', '#a855f7', '#22c55e'];
+      const chosenColor = colors[Math.floor(Math.random() * colors.length)];
+
+      const newCar = this.engine.addActor({
+        name: `Pegassi_Supercar_${Date.now() % 1000}`,
+        tag: 'vehicle',
+        shape: 'vehicle',
+        dimensions: { width: 2.2, height: 1.2, depth: 4.6 },
+        transform: { position: { x: px, y: 0.1, z: pz }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+        material: { color: chosenColor, metalness: 0.96, roughness: 0.12, castShadow: true },
+        physics: { enabled: true, type: 'kinematic', mass: 1400 }
+      });
+      return `🏎️ **ĐÃ SINH SIÊU XE MỚI (${chosenColor}) NGAY BÊN CẠNH BẠN!**\n- Tiến lại gần và nhấn **[F]** để nổ máy V8 và lên đường!`;
+    }
+
+    // 0c. Police Wanted Level
+    if (p.includes('truy nã') || p.includes('wanted') || p.includes('cảnh sát') || p.includes('5 sao')) {
+      this.engine.wantedLevel = 5;
+      this.engine.sound.play('snd_siren');
+      return '🚨 **BÁO ĐỘNG ĐỎ! MỨC ĐỘ TRUY NÃ: ★★★★★ (WANTED LEVEL 5)!**\n- Toàn bộ lực lượng cảnh sát Vice City đang truy lùng bạn!\n- Còi báo động hú vang, hãy lên siêu xe và drift thoát khỏi vòng vây!';
+    }
+
     // 1. Ultra Graphics / Unreal Engine 4 Mode
     if (p.includes('đồ họa') || p.includes('unreal') || p.includes('ultra') || p.includes('đẹp')) {
       const r = this.engine.renderer3d;
@@ -256,3 +290,4 @@ class AGYCopilot {
 }
 
 window.AGYCopilot = AGYCopilot;
+

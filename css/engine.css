@@ -900,3 +900,275 @@ input[type="checkbox"] {
   background: linear-gradient(135deg, #0369a1, #075985);
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
 }
+
+/* ==========================================================================
+   GTA 6: VICE CITY NEXT-GEN HUD OVERLAY (OPEN WORLD AAA FIDELITY)
+   ========================================================================== */
+.gta6-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  user-select: none;
+}
+
+/* Top Right Wanted Stars & Cash Counter */
+.gta6-top-right {
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.gta6-stars {
+  display: flex;
+  gap: 4px;
+  background: rgba(10, 14, 23, 0.65);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gta-star {
+  font-size: 20px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.gta-star.active {
+  color: #facc15;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.85);
+}
+
+.gta-star.flashing {
+  animation: star-wanted-flash 0.5s infinite alternate;
+}
+
+@keyframes star-wanted-flash {
+  0% { color: #ef4444; text-shadow: 0 0 14px #ef4444; }
+  100% { color: #3b82f6; text-shadow: 0 0 14px #3b82f6; }
+}
+
+.gta6-cash {
+  font-size: 26px;
+  font-weight: 900;
+  color: #4ade80;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 0 16px rgba(74, 222, 128, 0.6);
+  letter-spacing: 1px;
+}
+
+.gta6-weapon-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.gta6-weapon-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}
+
+.gta6-ammo {
+  font-size: 12px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+/* Center Vehicle Interaction Prompt */
+.gta6-prompt {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(9, 13, 22, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.45);
+  padding: 8px 18px;
+  border-radius: 30px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  animation: prompt-float 1.6s infinite ease-in-out;
+}
+
+@keyframes prompt-float {
+  0%, 100% { transform: translate(-50%, -50%); }
+  50% { transform: translate(-50%, -60%); }
+}
+
+.gta6-key-badge {
+  background: #00f0ff;
+  color: #050b14;
+  font-weight: 900;
+  font-size: 13px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+/* Bottom Left Radar & Vitals */
+.gta6-radar-wrapper {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.gta6-radar-frame {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.9) 0%, rgba(3, 7, 18, 0.96) 100%);
+  border: 2px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.8), inset 0 0 16px rgba(56, 189, 248, 0.15);
+  overflow: hidden;
+}
+
+#gta6-radar-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gta6-radar-crosshair {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle at center, transparent 0, transparent 20px, rgba(56, 189, 248, 0.08) 21px, rgba(56, 189, 248, 0.08) 22px);
+  pointer-events: none;
+}
+
+.gta6-radar-player-arrow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  color: #00f0ff;
+  text-shadow: 0 0 10px #00f0ff;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.gta6-status-bars {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gta6-bar-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gta6-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.2s ease;
+}
+
+.health-fill {
+  background: linear-gradient(90deg, #10b981, #34d399);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.armor-fill {
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+.stamina-fill {
+  background: linear-gradient(90deg, #eab308, #fef08a);
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.5);
+}
+
+/* Digital Speedometer */
+.gta6-speedometer {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  background: rgba(10, 14, 23, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 12px;
+  border-radius: 6px;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
+}
+
+.speed-num {
+  font-size: 24px;
+  font-weight: 900;
+  color: #f8fafc;
+  line-height: 1;
+  font-family: monospace;
+}
+
+.speed-unit {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.speed-gear {
+  font-size: 10px;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-left: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* Location Watermark (Bottom Right) */
+.gta6-location-badge {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  text-align: right;
+  pointer-events: none;
+}
+
+.gta6-street-name {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(56, 189, 248, 0.4);
+}
+
+.gta6-city-name {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #f472b6;
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.6);
+}

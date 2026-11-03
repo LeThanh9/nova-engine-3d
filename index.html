@@ -38,6 +38,7 @@
       <!-- Quick Actions -->
       <div class="action-group">
         <select id="template-select" class="btn btn-outline" title="Chọn mẫu game 3D">
+          <option value="gta6_vice_city" selected>🌴 Mẫu: GTA 6 Vice City (Open World Supercars)</option>
           <option value="adventure3d">🎮 Mẫu: Đấu Trường Sci-Fi 3D (Góc nhìn thứ 3)</option>
           <option value="cyberpunk3d">🌆 Mẫu: Thành Phố Cyberpunk Neon</option>
           <option value="physics3d">🧱 Mẫu: Đấu Trường Vật Lý 3D</option>
@@ -165,6 +166,62 @@
           <div id="ue-view-cube" class="ue-view-cube" title="Góc Nhìn View Cube">
             <div class="cube-face cube-front">TOP</div>
           </div>
+
+          <!-- GTA 6 Next-Gen HUD Overlay -->
+          <div id="gta6-hud" class="gta6-hud">
+            <!-- Top Right: Wanted Level Stars & Cash Counter & Weapon Slot -->
+            <div class="gta6-top-right">
+              <div class="gta6-stars" id="gta6-stars" title="Wanted Level (Mức Độ Truy Nã)">
+                <span class="gta-star" id="star-1">★</span>
+                <span class="gta-star" id="star-2">★</span>
+                <span class="gta-star" id="star-3">★</span>
+                <span class="gta-star" id="star-4">★</span>
+                <span class="gta-star" id="star-5">★</span>
+              </div>
+              <div class="gta6-cash" id="gta6-cash">$2,548,900</div>
+              <div class="gta6-weapon-badge">
+                <span class="gta6-weapon-name" id="gta6-weapon-name">PLASMA CANNON</span>
+                <span class="gta6-ammo" id="gta6-ammo">999 | ∞</span>
+              </div>
+            </div>
+
+            <!-- Center Vehicle Interaction Prompt ("[F] Lái Siêu Xe") -->
+            <div class="gta6-prompt" id="gta6-prompt" style="display: none;">
+              <span class="gta6-key-badge">F</span>
+              <span id="gta6-prompt-text">Lái Siêu Xe (Drive Supercar)</span>
+            </div>
+
+            <!-- Bottom Left: Circular Radar Mini-Map + Health & Armor Arcs + Speedometer -->
+            <div class="gta6-radar-wrapper">
+              <div class="gta6-radar-frame">
+                <canvas id="gta6-radar-canvas" width="150" height="150"></canvas>
+                <div class="gta6-radar-crosshair"></div>
+                <div class="gta6-radar-player-arrow" id="gta6-player-arrow">▲</div>
+              </div>
+              <div class="gta6-status-bars">
+                <div class="gta6-bar-track health-track" title="Máu (Health)">
+                  <div class="gta6-bar-fill health-fill" id="gta6-health-fill" style="width: 100%;"></div>
+                </div>
+                <div class="gta6-bar-track armor-track" title="Giáp (Armor)">
+                  <div class="gta6-bar-fill armor-fill" id="gta6-armor-fill" style="width: 85%;"></div>
+                </div>
+                <div class="gta6-bar-track stamina-track" title="Thể lực (Stamina)">
+                  <div class="gta6-bar-fill stamina-fill" id="gta6-stamina-fill" style="width: 95%;"></div>
+                </div>
+              </div>
+              <div class="gta6-speedometer" id="gta6-speedometer" style="display: none;">
+                <span class="speed-num" id="gta6-speed-num">0</span>
+                <span class="speed-unit">KM/H</span>
+                <div class="speed-gear" id="gta6-speed-gear">GEAR 1</div>
+              </div>
+            </div>
+
+            <!-- GTA 6 Location Watermark -->
+            <div class="gta6-location-badge">
+              <div class="gta6-street-name">OCEAN DRIVE BOULEVARD</div>
+              <div class="gta6-city-name">VICE CITY • 2026</div>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -221,6 +278,9 @@
         <div class="ai-copilot-container">
           <div class="ai-chips-bar">
             <span style="font-size: 11px; font-weight: 700; color: var(--ue-cyan); margin-right: 4px;">Lệnh AI nhanh:</span>
+            <button class="ai-prompt-chip" data-cmd="Kích hoạt thế giới mở GTA 6 Vice City">🌴 Mở GTA 6 Vice City</button>
+            <button class="ai-prompt-chip" data-cmd="Sinh thêm siêu xe Pegassi thể thao">🏎️ Sinh Siêu Xe</button>
+            <button class="ai-prompt-chip" data-cmd="Tăng mức truy nã 5 sao cảnh sát">⭐ Bật Truy Nã 5 Sao</button>
             <button class="ai-prompt-chip" data-cmd="Nâng cấp đồ họa cực đại Unreal 4">✨ Đồ Họa Ultra UE4</button>
             <button class="ai-prompt-chip" data-cmd="Đổi khí quyển hoàng hôn rực rỡ">🌆 Hoàng Hôn Sunset</button>
             <button class="ai-prompt-chip" data-cmd="Kích hoạt phong cách Cyberpunk Neon Night">🌃 Cyberpunk Night</button>

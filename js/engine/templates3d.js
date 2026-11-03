@@ -2,6 +2,272 @@
  * NovaEngine 3D - Ready-to-Play 3D Unreal Engine 4 Style Game Templates
  */
 const EngineTemplates3D = {
+  // 0. Grand Theft Auto VI: Vice City 2026 Open World Template (Supercars, Coastal Ocean, Palm Trees & Neon Hotels)
+  createGTA6ViceCity() {
+    return {
+      name: 'GTA 6: Vice City Next-Gen 3D',
+      version: '3.0.0 (GTA 6 Edition)',
+      actors: [
+        // 1. Coastal Boulevard Asphalt Highway
+        {
+          name: 'Ocean Drive Boulevard (Highway)',
+          tag: 'road',
+          shape: 'road',
+          dimensions: { width: 16, height: 0.3, depth: 180 },
+          transform: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#ffffff', metalness: 0.4, roughness: 0.35 },
+          physics: { enabled: true, type: 'static', friction: 0.6 }
+        },
+
+        // 2. Coastal Ocean Water Plane (Dynamic Wave Motion)
+        {
+          name: 'Biscayne Bay Ocean Water',
+          tag: 'ocean',
+          shape: 'ocean_water',
+          dimensions: { width: 140, height: 1.0, depth: 200 },
+          transform: { position: { x: -75, y: -0.15, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: {
+            color: '#0284c7',
+            emissive: '#0369a1',
+            emissiveIntensity: 0.25,
+            metalness: 0.9,
+            roughness: 0.08,
+            transparent: true,
+            opacity: 0.88
+          },
+          physics: { enabled: false }
+        },
+
+        // 3. Sandy Coastal Shoreline Promenade
+        {
+          name: 'Tropical Beach Sand Strip',
+          tag: 'solid',
+          shape: 'plane',
+          dimensions: { width: 40, depth: 200 },
+          transform: { position: { x: -28, y: -0.05, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#fef08a', metalness: 0.1, roughness: 0.9 },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 4. Player Hero (Can Walk, Shoot Blaster, and Press [F] to Drive Supercars)
+        {
+          name: 'Protagonist (Vice City Legend)',
+          tag: 'player',
+          shape: 'character',
+          dimensions: { radius: 0.6, height: 1.8 },
+          transform: { position: { x: -1.5, y: 1.0, z: 4.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: {
+            color: '#00f0ff',
+            metalness: 0.9,
+            roughness: 0.15,
+            emissive: '#00f0ff',
+            emissiveIntensity: 1.5,
+            castShadow: true
+          },
+          physics: {
+            enabled: true,
+            type: 'dynamic',
+            mass: 2.0,
+            friction: 0.2,
+            restitution: 0.0
+          },
+          behaviors: [
+            { type: 'characterController3D', speed: 9.0, jumpForce: 10.0 },
+            { type: 'cameraFollow3D', distance: 6.5, height: 3.2, smooth: 0.12 }
+          ]
+        },
+
+        // 5. Drivable Supercar 1: Pegassi Infernus (Electric Cyan)
+        {
+          name: 'Pegassi Infernus (Supercar)',
+          tag: 'vehicle',
+          shape: 'vehicle',
+          dimensions: { width: 2.2, height: 1.2, depth: 4.6 },
+          transform: { position: { x: 3.5, y: 0.1, z: 8.0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: {
+            color: '#00d2ff',
+            metalness: 0.96,
+            roughness: 0.12,
+            castShadow: true
+          },
+          physics: { enabled: true, type: 'kinematic', mass: 1400 }
+        },
+
+        // 6. Drivable Supercar 2: Grotti Turismo (Neon Crimson)
+        {
+          name: 'Grotti Turismo (V8 Coupe)',
+          tag: 'vehicle',
+          shape: 'vehicle',
+          dimensions: { width: 2.2, height: 1.2, depth: 4.6 },
+          transform: { position: { x: -3.5, y: 0.1, z: 32.0 }, rotation: { x: 0, y: 180, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: {
+            color: '#ff1744',
+            metalness: 0.96,
+            roughness: 0.12,
+            castShadow: true
+          },
+          physics: { enabled: true, type: 'kinematic', mass: 1350 }
+        },
+
+        // 7. Tropical Coconut Palm Trees (Median & Shoreline)
+        {
+          name: 'Coastal Palm Tree 1',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.2 },
+          transform: { position: { x: -7.5, y: 0, z: -35 }, rotation: { x: 0, y: 25, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Coastal Palm Tree 2',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.6 },
+          transform: { position: { x: -7.5, y: 0, z: -10 }, rotation: { x: 0, y: 70, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Coastal Palm Tree 3',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.0 },
+          transform: { position: { x: -7.5, y: 0, z: 15 }, rotation: { x: 0, y: 140, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Coastal Palm Tree 4',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.8 },
+          transform: { position: { x: -7.5, y: 0, z: 40 }, rotation: { x: 0, y: 210, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Coastal Palm Tree 5',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.3 },
+          transform: { position: { x: -7.5, y: 0, z: 65 }, rotation: { x: 0, y: 310, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Sidewalk Palm Tree 6',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 6.8 },
+          transform: { position: { x: 8.5, y: 0, z: -20 }, rotation: { x: 0, y: 45, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Sidewalk Palm Tree 7',
+          tag: 'palm_tree',
+          shape: 'palm_tree',
+          dimensions: { height: 7.4 },
+          transform: { position: { x: 8.5, y: 0, z: 30 }, rotation: { x: 0, y: 180, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+
+        // 8. Art-Deco Miami Neon Hotels
+        {
+          name: 'Hotel Vice (South Beach Art-Deco)',
+          tag: 'building',
+          shape: 'building',
+          dimensions: { width: 14, height: 18, depth: 12 },
+          transform: { position: { x: 19.0, y: 0, z: -25 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#fb7185', metalness: 0.2, roughness: 0.5 },
+          physics: { enabled: true, type: 'static' }
+        },
+        {
+          name: 'Ocean Royale Suites (Neon Hotel)',
+          tag: 'building',
+          shape: 'building',
+          dimensions: { width: 16, height: 22, depth: 12 },
+          transform: { position: { x: 19.0, y: 0, z: 10 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#38bdf8', metalness: 0.2, roughness: 0.5 },
+          physics: { enabled: true, type: 'static' }
+        },
+        {
+          name: 'The Flamingo Palms Resort',
+          tag: 'building',
+          shape: 'building',
+          dimensions: { width: 14, height: 16, depth: 12 },
+          transform: { position: { x: 19.0, y: 0, z: 45 }, rotation: { x: 0, y: -90, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#f472b6', metalness: 0.2, roughness: 0.5 },
+          physics: { enabled: true, type: 'static' }
+        },
+
+        // 9. Street Light Lampposts (Illuminating the Highway)
+        {
+          name: 'Highway Street Light 1',
+          tag: 'street_light',
+          shape: 'box',
+          dimensions: { width: 1, height: 6.5, depth: 1 },
+          transform: { position: { x: 8.2, y: 0, z: -10 }, rotation: { x: 0, y: 180, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Highway Street Light 2',
+          tag: 'street_light',
+          shape: 'box',
+          dimensions: { width: 1, height: 6.5, depth: 1 },
+          transform: { position: { x: 8.2, y: 0, z: 25 }, rotation: { x: 0, y: 180, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Coastal Street Light 3',
+          tag: 'street_light',
+          shape: 'box',
+          dimensions: { width: 1, height: 6.5, depth: 1 },
+          transform: { position: { x: -8.2, y: 0, z: -25 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+        {
+          name: 'Coastal Street Light 4',
+          tag: 'street_light',
+          shape: 'box',
+          dimensions: { width: 1, height: 6.5, depth: 1 },
+          transform: { position: { x: -8.2, y: 0, z: 15 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }
+        },
+
+        // 10. Dynamic Physics Traffic Cones (Hit them with cars!)
+        {
+          name: 'Traffic Safety Cone 1',
+          tag: 'cone',
+          shape: 'traffic_cone',
+          dimensions: { width: 0.6, height: 0.85, depth: 0.6 },
+          transform: { position: { x: 0.5, y: 0, z: 18 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'dynamic', mass: 0.3, friction: 0.4 }
+        },
+        {
+          name: 'Traffic Safety Cone 2',
+          tag: 'cone',
+          shape: 'traffic_cone',
+          dimensions: { width: 0.6, height: 0.85, depth: 0.6 },
+          transform: { position: { x: -1.0, y: 0, z: 21 }, rotation: { x: 0, y: 15, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'dynamic', mass: 0.3, friction: 0.4 }
+        },
+        {
+          name: 'Traffic Safety Cone 3',
+          tag: 'cone',
+          shape: 'traffic_cone',
+          dimensions: { width: 0.6, height: 0.85, depth: 0.6 },
+          transform: { position: { x: 1.8, y: 0, z: 24 }, rotation: { x: 0, y: -20, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          physics: { enabled: true, type: 'dynamic', mass: 0.3, friction: 0.4 }
+        },
+
+        // 11. Explosive Hazard Barrels on the roadside
+        {
+          name: 'Hazard Fuel Barrel 1',
+          tag: 'barrel',
+          shape: 'cylinder',
+          dimensions: { radius: 0.7, radiusTop: 0.7, radiusBottom: 0.7, height: 1.8 },
+          transform: { position: { x: 5.5, y: 0.9, z: 38 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#ef4444', metalness: 0.8, roughness: 0.3 },
+          physics: { enabled: true, type: 'dynamic', mass: 1.5, restitution: 0.3 }
+        },
+        {
+          name: 'Hazard Fuel Barrel 2',
+          tag: 'barrel',
+          shape: 'cylinder',
+          dimensions: { radius: 0.7, radiusTop: 0.7, radiusBottom: 0.7, height: 1.8 },
+          transform: { position: { x: -5.5, y: 0.9, z: -20 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } },
+          material: { color: '#ef4444', metalness: 0.8, roughness: 0.3 },
+          physics: { enabled: true, type: 'dynamic', mass: 1.5, restitution: 0.3 }
+        }
+      ]
+    };
+  },
+
   // 1. Third-Person 3D Action Adventure (Unreal Engine 4 Style)
   createAdventure3D() {
     return {

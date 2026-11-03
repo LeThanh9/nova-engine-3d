@@ -594,6 +594,125 @@ class Editor3DUI {
       const calls = this.engine.renderer3d?.renderer?.info?.render?.calls || 18;
       statDrawsVal.innerText = `${calls}`;
     }
+
+    // Update GTA 6 Vice City HUD Overlay
+    this.updateGTA6HUD();
+  }
+
+  // GTA 6 Next-Gen HUD Controller
+  updateGTA6HUD() {
+    const hud = document.getElementById('gta6-hud');
+    if (!hud) return;
+
+    // 1. Wanted Stars
+    const wanted = this.engine.wantedLevel || 0;
+    for (let i = 1; i <= 5; i++) {
+      const star = document.getElementById(`star-${i}`);
+      if (star) {
+        star.classList.toggle('active', i <= wanted);
+        star.classList.toggle('flashing', wanted > 0 && i <= wanted);
+      }
+    }
+
+    // 2. Cash Counter
+    const cashElem = document.getElementById('gta6-cash');
+    if (cashElem) {
+      cashElem.innerText = `$${(this.engine.cash || 2548900).toLocaleString()}`;
+    }
+
+    // 3. Vehicle Drive Prompt
+    const promptElem = document.getElementById('gta6-prompt');
+    if (promptElem) {
+      if (this.engine.nearCar && !this.engine.currentVehicle && this.engine.isPlaying) {
+        promptElem.style.display = 'flex';
+        const txt = document.getElementById('gta6-prompt-text');
+        if (txt) txt.innerText = `Lái Xe (${this.engine.nearCar.name})`;
+      } else {
+        promptElem.style.display = 'none';
+      }
+    }
+
+    // 4. Speedometer
+    const speedo = document.getElementById('gta6-speedometer');
+    if (speedo) {
+      if (this.engine.currentVehicle && this.engine.isPlaying) {
+        speedo.style.display = 'flex';
+        const kmh = Math.round(Math.abs(this.engine.vehicleSpeed) * 3.6);
+        const numElem = document.getElementById('gta6-speed-num');
+        const gearElem = document.getElementById('gta6-speed-gear');
+        if (numElem) numElem.innerText = `${kmh}`;
+        if (gearElem) {
+          if (this.engine.vehicleSpeed < -0.5) gearElem.innerText = 'REV';
+          else if (kmh < 30) gearElem.innerText = 'GEAR 1';
+          else if (kmh < 60) gearElem.innerText = 'GEAR 2';
+          else if (kmh < 95) gearElem.innerText = 'GEAR 3';
+          else if (kmh < 130) gearElem.innerText = 'GEAR 4';
+          else gearElem.innerText = 'GEAR 5';
+        }
+      } else {
+        speedo.style.display = 'none';
+      }
+    }
+
+    // 5. Radar Mini-Map Canvas
+    const radarCanvas = document.getElementById('gta6-radar-canvas');
+    if (radarCanvas) {
+      const ctx = radarCanvas.getContext('2d');
+      const w = radarCanvas.width;
+      const h = radarCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const targetActor = this.engine.currentVehicle || this.engine.actors.find(a => a.tag === 'player');
+      if (targetActor) {
+        const posX = targetActor.transform.position.x;
+        const posZ = targetActor.transform.position.z;
+        const rotY = EngineMath.degToRad(targetActor.transform.rotation.y);
+
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.rotate(-rotY); // Rotate map with heading
+
+        // Draw Ocean Water (West side)
+        ctx.fillStyle = 'rgba(2, 132, 199, 0.45)';
+        const oceanScreenX = (-75 - posX) * 1.5;
+        ctx.fillRect(oceanScreenX - 90, -100, 180, 200);
+
+        // Draw Highway Boulevard Road
+        ctx.fillStyle = 'rgba(51, 65, 85, 0.85)';
+        const roadScreenX = (0 - posX) * 1.5;
+        ctx.fillRect(roadScreenX - 12, -120, 24, 240);
+
+        // Draw Yellow Center Road Strip
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(roadScreenX - 1, -120, 2, 240);
+
+        // Draw Actors (Vehicles = Cyan blips, Buildings = Pink squares, Barrels = Red dots)
+        for (const actor of this.engine.actors) {
+          if (actor === targetActor) continue;
+          const ax = (actor.transform.position.x - posX) * 1.5;
+          const az = (actor.transform.position.z - posZ) * 1.5;
+
+          if (Math.abs(ax) > w / 2 || Math.abs(az) > h / 2) continue;
+
+          if (actor.tag === 'vehicle') {
+            ctx.fillStyle = '#00f0ff';
+            ctx.beginPath();
+            ctx.arc(ax, az, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (actor.tag === 'building') {
+            ctx.fillStyle = '#f472b6';
+            ctx.fillRect(ax - 5, az - 5, 10, 10);
+          } else if (actor.tag === 'barrel') {
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(ax, az, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        ctx.restore();
+      }
+    }
   }
 
   log(msg, type = 'info') {

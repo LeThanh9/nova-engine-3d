@@ -33,6 +33,11 @@ class Renderer3D {
     // Procedural Texture Cache
     this.textures = {};
 
+    // GTA 6 Dynamic Simulation Meshes
+    this.animatedOceans = [];
+    this.animatedPalms = [];
+    this.animatedVehicles = [];
+
     // Freefly Camera State
     this.isFreeflying = false;
     this.cameraSpeed = 14.0;
@@ -226,6 +231,121 @@ class Renderer3D {
     bctx.textAlign = 'center';
     bctx.fillText('⚠ DANGER ⚠', 128, 93);
     this.textures['hazard_barrel'] = new THREE.CanvasTexture(barrelCanvas);
+
+    // 5. GTA 6 Wet Asphalt Highway Road Texture
+    const roadCanvas = document.createElement('canvas');
+    roadCanvas.width = 512;
+    roadCanvas.height = 512;
+    const rctx = roadCanvas.getContext('2d');
+    // Dark asphalt base
+    rctx.fillStyle = '#1c1f26';
+    rctx.fillRect(0, 0, 512, 512);
+
+    // Fine asphalt aggregate speckles
+    for (let i = 0; i < 4000; i++) {
+      const rx = Math.random() * 512;
+      const ry = Math.random() * 512;
+      const gray = Math.floor(25 + Math.random() * 35);
+      rctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+      rctx.fillRect(rx, ry, 1.5, 1.5);
+    }
+
+    // Wet puddle patches (reflective dark glossy pools)
+    const puddles = [
+      { x: 120, y: 160, rx: 70, ry: 40 },
+      { x: 380, y: 320, rx: 85, ry: 50 },
+      { x: 260, y: 440, rx: 60, ry: 35 }
+    ];
+    for (const p of puddles) {
+      const pGrad = rctx.createRadialGradient(p.x, p.y, 5, p.x, p.y, p.rx);
+      pGrad.addColorStop(0, 'rgba(10, 14, 22, 0.95)');
+      pGrad.addColorStop(0.7, 'rgba(16, 22, 34, 0.6)');
+      pGrad.addColorStop(1, 'rgba(28, 31, 38, 0)');
+      rctx.fillStyle = pGrad;
+      rctx.beginPath();
+      rctx.ellipse(p.x, p.y, p.rx, p.ry, 0.2, 0, Math.PI * 2);
+      rctx.fill();
+    }
+
+    // Yellow double center line
+    rctx.fillStyle = '#facc15';
+    rctx.fillRect(250, 0, 4, 512);
+    rctx.fillRect(258, 0, 4, 512);
+
+    // White dashed lane divider lines
+    rctx.fillStyle = '#f1f5f9';
+    for (let y = 0; y < 512; y += 48) {
+      rctx.fillRect(124, y, 4, 28);
+      rctx.fillRect(384, y, 4, 28);
+    }
+
+    // White outer road boundary lines
+    rctx.fillStyle = 'rgba(241, 245, 249, 0.85)';
+    rctx.fillRect(16, 0, 6, 512);
+    rctx.fillRect(490, 0, 6, 512);
+
+    const roadTex = new THREE.CanvasTexture(roadCanvas);
+    roadTex.wrapS = THREE.RepeatWrapping;
+    roadTex.wrapT = THREE.RepeatWrapping;
+    this.textures['asphalt_road'] = roadTex;
+    this.textures['asphalt_road_normal'] = this.generateNormalMapFromCanvas(roadCanvas, 1.4);
+
+    // 6. GTA 6 Tropical Coconut Palm Trunk Bark
+    const palmCanvas = document.createElement('canvas');
+    palmCanvas.width = 256;
+    palmCanvas.height = 256;
+    const palmCtx = palmCanvas.getContext('2d');
+    palmCtx.fillStyle = '#453225';
+    palmCtx.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 256; y += 16) {
+      palmCtx.fillStyle = y % 32 === 0 ? '#322318' : '#594130';
+      palmCtx.fillRect(0, y, 256, 5);
+      palmCtx.fillStyle = 'rgba(0,0,0,0.2)';
+      palmCtx.fillRect(0, y + 5, 256, 2);
+    }
+    const palmTex = new THREE.CanvasTexture(palmCanvas);
+    palmTex.wrapS = THREE.RepeatWrapping;
+    palmTex.wrapT = THREE.RepeatWrapping;
+    this.textures['palm_bark'] = palmTex;
+
+    // 7. GTA 6 Art-Deco Miami Neon Hotel Facade
+    const hotelCanvas = document.createElement('canvas');
+    hotelCanvas.width = 512;
+    hotelCanvas.height = 512;
+    const hotelCtx = hotelCanvas.getContext('2d');
+    // Pastel flamingo pink / peach facade
+    hotelCtx.fillStyle = '#fb7185';
+    hotelCtx.fillRect(0, 0, 512, 512);
+    // Turquoise horizontal Art-Deco moldings
+    hotelCtx.fillStyle = '#06b6d4';
+    hotelCtx.fillRect(0, 120, 512, 16);
+    hotelCtx.fillRect(0, 240, 512, 16);
+    hotelCtx.fillRect(0, 360, 512, 16);
+    hotelCtx.fillRect(0, 480, 512, 32);
+
+    // Illuminated hotel windows
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 6; col++) {
+        const wx = 36 + col * 76;
+        const wy = 40 + row * 120;
+        hotelCtx.fillStyle = (row + col) % 3 === 0 ? '#1e293b' : '#fef08a';
+        hotelCtx.fillRect(wx, wy, 44, 56);
+        // Window frame
+        hotelCtx.strokeStyle = '#fff';
+        hotelCtx.lineWidth = 3;
+        hotelCtx.strokeRect(wx, wy, 44, 56);
+      }
+    }
+    // Neon Sign banner on top
+    hotelCtx.fillStyle = '#0f172a';
+    hotelCtx.fillRect(80, 10, 352, 28);
+    hotelCtx.fillStyle = '#00f0ff';
+    hotelCtx.font = 'bold 20px sans-serif';
+    hotelCtx.textAlign = 'center';
+    hotelCtx.fillText('★ HOTEL VICE ★', 256, 31);
+
+    const hotelTex = new THREE.CanvasTexture(hotelCanvas);
+    this.textures['hotel_facade'] = hotelTex;
   }
 
   // Generates real tangent-space Normal Maps from any 2D canvas height/color map!
@@ -728,6 +848,41 @@ class Renderer3D {
       return this.createLightActor(actor);
     }
 
+    // 6. GTA 6 Drivable Supercars (Pegassi / Grotti Supercar Rig)
+    if (actor.tag === 'vehicle' || actor.shape === 'vehicle' || actor.shape === 'car') {
+      return this.buildVehicleMesh(actor);
+    }
+
+    // 7. GTA 6 Tropical Palm Trees
+    if (actor.tag === 'palm_tree' || actor.shape === 'palm_tree') {
+      return this.buildPalmTreeMesh(actor);
+    }
+
+    // 8. GTA 6 Dynamic Coastal Ocean Water Plane
+    if (actor.tag === 'ocean' || actor.shape === 'ocean_water') {
+      return this.buildOceanWaterMesh(actor);
+    }
+
+    // 9. GTA 6 Art-Deco Miami Neon Hotel
+    if (actor.tag === 'building' || actor.shape === 'building' || actor.shape === 'hotel') {
+      return this.buildBuildingMesh(actor);
+    }
+
+    // 10. GTA 6 Asphalt Highway / Boulevard Road
+    if (actor.tag === 'road' || actor.shape === 'road') {
+      return this.buildRoadMesh(actor);
+    }
+
+    // 11. GTA 6 Street Light Lamppost
+    if (actor.tag === 'street_light') {
+      return this.buildStreetLightMesh(actor);
+    }
+
+    // 12. GTA 6 Traffic Safety Cone
+    if (actor.tag === 'cone' || actor.shape === 'traffic_cone') {
+      return this.buildTrafficConeMesh(actor);
+    }
+
     let geometry;
     const dims = actor.dimensions;
 
@@ -1126,6 +1281,545 @@ class Renderer3D {
     return group;
   }
 
+  // GTA 6 High-Fidelity Supercar Mesh Builder (Pegassi / Grotti Supercar Rig)
+  buildVehicleMesh(actor) {
+    const group = new THREE.Group();
+    group.isVehicleGroup = true;
+    const bodyColor = actor.material?.color || '#00d2ff';
+    const metalness = actor.material?.metalness ?? 0.95;
+    const roughness = actor.material?.roughness ?? 0.12;
+
+    // Body Paint Material (Metallic Clearcoat Car Paint)
+    const paintMat = new THREE.MeshStandardMaterial({
+      color: bodyColor,
+      metalness: metalness,
+      roughness: roughness
+    });
+
+    // Dark Carbon Fiber / Trim Material
+    const carbonMat = new THREE.MeshStandardMaterial({
+      color: '#090d14',
+      metalness: 0.8,
+      roughness: 0.3
+    });
+
+    // Tinted Glass Material (Cockpit & Windshield)
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: '#111827',
+      metalness: 0.9,
+      roughness: 0.05,
+      transparent: true,
+      opacity: 0.72
+    });
+
+    // 1. Lower Aerodynamic Chassis / Floorpan
+    const chassisGeom = new THREE.BoxGeometry(2.1, 0.45, 4.4);
+    const chassis = new THREE.Mesh(chassisGeom, paintMat);
+    chassis.position.y = 0.45;
+    chassis.castShadow = true;
+    chassis.receiveShadow = true;
+    group.add(chassis);
+
+    // Front Sloped Nose / Hood
+    const hoodGeom = new THREE.BoxGeometry(1.95, 0.28, 1.4);
+    const hood = new THREE.Mesh(hoodGeom, paintMat);
+    hood.position.set(0, 0.52, 1.35);
+    hood.rotation.x = -0.12;
+    hood.castShadow = true;
+    group.add(hood);
+
+    // Front Carbon Splitter
+    const splitterGeom = new THREE.BoxGeometry(2.15, 0.08, 0.6);
+    const splitter = new THREE.Mesh(splitterGeom, carbonMat);
+    splitter.position.set(0, 0.25, 2.15);
+    group.add(splitter);
+
+    // 2. Aerodynamic Cockpit Cabin & Windshield
+    const cabinGeom = new THREE.BoxGeometry(1.65, 0.6, 2.1);
+    const cabin = new THREE.Mesh(cabinGeom, glassMat);
+    cabin.position.set(0, 0.92, -0.2);
+    cabin.castShadow = true;
+    group.add(cabin);
+
+    // Roof Panel
+    const roofGeom = new THREE.BoxGeometry(1.5, 0.06, 1.3);
+    const roof = new THREE.Mesh(roofGeom, paintMat);
+    roof.position.set(0, 1.24, -0.25);
+    roof.castShadow = true;
+    group.add(roof);
+
+    // Rear Engine Cover Louvers / Fastback
+    const rearDeckGeom = new THREE.BoxGeometry(1.9, 0.35, 1.2);
+    const rearDeck = new THREE.Mesh(rearDeckGeom, carbonMat);
+    rearDeck.position.set(0, 0.68, -1.5);
+    rearDeck.castShadow = true;
+    group.add(rearDeck);
+
+    // 3. High Downforce Rear GT Wing Spoiler
+    const wingGeom = new THREE.BoxGeometry(2.2, 0.06, 0.55);
+    const wing = new THREE.Mesh(wingGeom, carbonMat);
+    wing.position.set(0, 1.25, -2.15);
+    wing.castShadow = true;
+    group.add(wing);
+
+    // Spoiler Struts (Dual Uprights)
+    const strutGeom = new THREE.BoxGeometry(0.06, 0.45, 0.25);
+    const strutL = new THREE.Mesh(strutGeom, carbonMat);
+    strutL.position.set(-0.65, 1.02, -2.12);
+    const strutR = strutL.clone();
+    strutR.position.x = 0.65;
+    group.add(strutL, strutR);
+
+    // 4. Front Dual High-Intensity LED Headlights + Real Three.js Spotlights!
+    const lightLensMat = new THREE.MeshStandardMaterial({
+      color: '#e0f2fe',
+      emissive: '#38bdf8',
+      emissiveIntensity: 4.5,
+      roughness: 0.1
+    });
+    const hLightGeom = new THREE.BoxGeometry(0.35, 0.12, 0.1);
+    const hLightL = new THREE.Mesh(hLightGeom, lightLensMat);
+    hLightL.position.set(-0.75, 0.52, 2.18);
+    const hLightR = hLightL.clone();
+    hLightR.position.x = 0.75;
+    group.add(hLightL, hLightR);
+
+    // Real dynamic SpotLight beams casting on road
+    const spotL = new THREE.SpotLight('#ffffff', 3.5, 38, Math.PI / 6, 0.35);
+    spotL.position.set(-0.75, 0.55, 2.2);
+    spotL.target.position.set(-0.75, 0.0, 16.0);
+    group.add(spotL);
+    group.add(spotL.target);
+
+    const spotR = new THREE.SpotLight('#ffffff', 3.5, 38, Math.PI / 6, 0.35);
+    spotR.position.set(0.75, 0.55, 2.2);
+    spotR.target.position.set(0.75, 0.0, 16.0);
+    group.add(spotR);
+    group.add(spotR.target);
+
+    // 5. Rear Dual Taillight Bar (GTA 6 Style Neon Crimson)
+    const tailMat = new THREE.MeshStandardMaterial({
+      color: '#ef4444',
+      emissive: '#ef4444',
+      emissiveIntensity: 4.0,
+      roughness: 0.1
+    });
+    const tailGeom = new THREE.BoxGeometry(1.9, 0.12, 0.08);
+    const tailMesh = new THREE.Mesh(tailGeom, tailMat);
+    tailMesh.position.set(0, 0.58, -2.2);
+    group.add(tailMesh);
+
+    // Dual Performance Exhaust Tips
+    const exhMat = new THREE.MeshStandardMaterial({
+      color: '#334155',
+      metalness: 0.95,
+      roughness: 0.2
+    });
+    const exhGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.25, 12);
+    exhGeom.rotateX(Math.PI / 2);
+    const exhL = new THREE.Mesh(exhGeom, exhMat);
+    exhL.position.set(-0.35, 0.35, -2.22);
+    const exhR = exhL.clone();
+    exhR.position.x = 0.35;
+    group.add(exhL, exhR);
+
+    // 6. Alloy Wheels with Disc Brakes & Tires
+    const tireMat = new THREE.MeshStandardMaterial({ color: '#171717', roughness: 0.75, metalness: 0.1 });
+    const rimMat = new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.15, metalness: 0.95 });
+    const brakeMat = new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.2, metalness: 0.8 });
+
+    const createWheel = (isFront) => {
+      const wheelPivot = new THREE.Group();
+      const wheelMesh = new THREE.Group();
+
+      // Tire
+      const tireGeom = new THREE.CylinderGeometry(0.42, 0.42, 0.32, 20);
+      tireGeom.rotateZ(Math.PI / 2);
+      const tire = new THREE.Mesh(tireGeom, tireMat);
+      tire.castShadow = true;
+      wheelMesh.add(tire);
+
+      // Alloy Rim (Spokes)
+      const rimGeom = new THREE.CylinderGeometry(0.28, 0.28, 0.33, 16);
+      rimGeom.rotateZ(Math.PI / 2);
+      const rim = new THREE.Mesh(rimGeom, rimMat);
+      wheelMesh.add(rim);
+
+      // Center Nut
+      const nutGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.35, 8);
+      nutGeom.rotateZ(Math.PI / 2);
+      const nut = new THREE.Mesh(nutGeom, brakeMat);
+      wheelMesh.add(nut);
+
+      wheelPivot.add(wheelMesh);
+      return { pivot: wheelPivot, mesh: wheelMesh, isFront };
+    };
+
+    const wFL = createWheel(true);
+    wFL.pivot.position.set(-1.05, 0.42, 1.35);
+    const wFR = createWheel(true);
+    wFR.pivot.position.set(1.05, 0.42, 1.35);
+
+    const wBL = createWheel(false);
+    wBL.pivot.position.set(-1.05, 0.42, -1.35);
+    const wBR = createWheel(false);
+    wBR.pivot.position.set(1.05, 0.42, -1.35);
+
+    group.add(wFL.pivot, wFR.pivot, wBL.pivot, wBR.pivot);
+
+    // 7. Interactive Hovering Drive Icon / Hologram
+    const badgeCanvas = document.createElement('canvas');
+    badgeCanvas.width = 128;
+    badgeCanvas.height = 64;
+    const bctx = badgeCanvas.getContext('2d');
+    bctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    bctx.fillRect(4, 4, 120, 56);
+    bctx.strokeStyle = '#00f0ff';
+    bctx.lineWidth = 3;
+    bctx.strokeRect(4, 4, 120, 56);
+    bctx.fillStyle = '#00f0ff';
+    bctx.font = 'bold 22px sans-serif';
+    bctx.textAlign = 'center';
+    bctx.fillText('[F] LÁI XE', 64, 38);
+
+    const badgeTex = new THREE.CanvasTexture(badgeCanvas);
+    const badgeMat = new THREE.SpriteMaterial({ map: badgeTex, transparent: true, opacity: 0.95 });
+    const badgeSprite = new THREE.Sprite(badgeMat);
+    badgeSprite.position.set(0, 2.2, 0);
+    badgeSprite.scale.set(1.6, 0.8, 1);
+    group.add(badgeSprite);
+
+    // Store runtime rig on actor
+    actor._runtime.vehicleRig = {
+      wFL, wFR, wBL, wBR,
+      spotL, spotR,
+      badgeSprite,
+      tailMesh
+    };
+
+    this.animatedVehicles.push({ actor, group, rig: actor._runtime.vehicleRig });
+    return group;
+  }
+
+  // GTA 6 Tropical Curved Coconut Palm Tree Mesh
+  buildPalmTreeMesh(actor) {
+    const group = new THREE.Group();
+    const height = actor.dimensions?.height || 7.0;
+
+    // Curved Trunk using multi-segment stacked tilted cylinders
+    const barkMat = new THREE.MeshStandardMaterial({
+      color: '#5c4033',
+      roughness: 0.85,
+      metalness: 0.1
+    });
+    if (this.textures['palm_bark']) {
+      barkMat.map = this.textures['palm_bark'];
+    }
+
+    const segments = 6;
+    const segHeight = height / segments;
+    let currY = 0;
+    let currX = 0;
+    let currZ = 0;
+    const angleCurve = 0.05;
+
+    for (let i = 0; i < segments; i++) {
+      const radBottom = 0.42 * (1 - (i / segments) * 0.45);
+      const radTop = 0.42 * (1 - ((i + 1) / segments) * 0.45);
+      const geom = new THREE.CylinderGeometry(radTop, radBottom, segHeight, 12);
+      const segMesh = new THREE.Mesh(geom, barkMat);
+      segMesh.position.set(currX, currY + segHeight / 2, currZ);
+      segMesh.rotation.z = Math.sin(i * 0.3) * angleCurve;
+      segMesh.castShadow = true;
+      segMesh.receiveShadow = true;
+      group.add(segMesh);
+
+      currY += segHeight;
+      currX += Math.sin(i * 0.3) * angleCurve * segHeight;
+    }
+
+    // Coconut cluster under crown
+    const cocoMat = new THREE.MeshStandardMaterial({ color: '#2d1810', roughness: 0.7 });
+    for (let c = 0; c < 4; c++) {
+      const cocoGeom = new THREE.SphereGeometry(0.2, 8, 8);
+      const coco = new THREE.Mesh(cocoGeom, cocoMat);
+      const ang = (c / 4) * Math.PI * 2;
+      coco.position.set(currX + Math.cos(ang) * 0.28, currY - 0.2, currZ + Math.sin(ang) * 0.28);
+      group.add(coco);
+    }
+
+    // Lush Palm Fronds radiating in crown
+    const frondMat = new THREE.MeshStandardMaterial({
+      color: '#15803d',
+      roughness: 0.6,
+      metalness: 0.1,
+      side: THREE.DoubleSide
+    });
+
+    const fronds = [];
+    const frondCount = 10;
+    for (let f = 0; f < frondCount; f++) {
+      const angle = (f / frondCount) * Math.PI * 2;
+      const frondGroup = new THREE.Group();
+      frondGroup.position.set(currX, currY, currZ);
+      frondGroup.rotation.y = angle;
+
+      // Arching leaf blade
+      const leafGeom = new THREE.PlaneGeometry(0.8, 3.2, 3, 6);
+      leafGeom.translate(0, 1.6, 0);
+      leafGeom.rotateX(-0.5); // Arch downward
+      const leaf = new THREE.Mesh(leafGeom, frondMat);
+      leaf.castShadow = true;
+      frondGroup.add(leaf);
+
+      frondGroup.userData = {
+        baseRotX: frondGroup.rotation.x,
+        baseRotZ: frondGroup.rotation.z,
+        index: f
+      };
+      fronds.push(frondGroup);
+      group.add(frondGroup);
+    }
+
+    group.userData.fronds = fronds;
+    this.animatedPalms.push(group);
+    return group;
+  }
+
+  // GTA 6 Dynamic Coastal Ocean Water Plane with Wave Undulation
+  buildOceanWaterMesh(actor) {
+    const width = actor.dimensions?.width || 140;
+    const depth = actor.dimensions?.depth || 140;
+    const geom = new THREE.PlaneGeometry(width, depth, 36, 36);
+    geom.rotateX(-Math.PI / 2);
+
+    const oceanMat = new THREE.MeshStandardMaterial({
+      color: '#0284c7',
+      emissive: '#0369a1',
+      emissiveIntensity: 0.25,
+      metalness: 0.9,
+      roughness: 0.08,
+      transparent: true,
+      opacity: 0.88,
+      side: THREE.DoubleSide
+    });
+
+    const mesh = new THREE.Mesh(geom, oceanMat);
+    mesh.receiveShadow = true;
+    mesh.userData.initialPositions = new Float32Array(geom.attributes.position.array);
+
+    this.animatedOceans.push(mesh);
+    return mesh;
+  }
+
+  // GTA 6 Art-Deco Miami Neon Hotel Building
+  buildBuildingMesh(actor) {
+    const group = new THREE.Group();
+    const dims = actor.dimensions || { width: 14, height: 16, depth: 10 };
+
+    // 1. Main Pastel Hotel Tower
+    const hotelMat = new THREE.MeshStandardMaterial({
+      color: actor.material?.color || '#fb7185',
+      roughness: 0.45,
+      metalness: 0.15
+    });
+    if (this.textures['hotel_facade']) {
+      hotelMat.map = this.textures['hotel_facade'];
+    }
+
+    const towerGeom = new THREE.BoxGeometry(dims.width, dims.height, dims.depth);
+    const tower = new THREE.Mesh(towerGeom, hotelMat);
+    tower.position.y = dims.height / 2;
+    tower.castShadow = true;
+    tower.receiveShadow = true;
+    group.add(tower);
+
+    // 2. White Art-Deco Balconies & Eyebrows
+    const trimMat = new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.3, metalness: 0.2 });
+    for (let floor = 1; floor <= 3; floor++) {
+      const balcGeom = new THREE.BoxGeometry(dims.width + 0.6, 0.25, 1.2);
+      const balc = new THREE.Mesh(balcGeom, trimMat);
+      balc.position.set(0, floor * 3.8, dims.depth / 2 + 0.5);
+      balc.castShadow = true;
+      group.add(balc);
+    }
+
+    // 3. Ground Entrance Canopy
+    const canopyGeom = new THREE.BoxGeometry(5.0, 0.3, 3.2);
+    const canopy = new THREE.Mesh(canopyGeom, trimMat);
+    canopy.position.set(0, 3.2, dims.depth / 2 + 1.6);
+    canopy.castShadow = true;
+    group.add(canopy);
+
+    // Entrance Sconce Lights
+    const sconceL = new THREE.PointLight('#fef08a', 2.0, 8);
+    sconceL.position.set(-2.0, 2.6, dims.depth / 2 + 1.2);
+    const sconceR = sconceL.clone();
+    sconceR.position.x = 2.0;
+    group.add(sconceL, sconceR);
+
+    // 4. Roof Neon Billboard Sign ("HOTEL VICE")
+    const signGroup = new THREE.Group();
+    signGroup.position.set(0, dims.height + 1.4, 0);
+
+    const signBoardGeom = new THREE.BoxGeometry(dims.width * 0.7, 1.8, 0.4);
+    const signBoardMat = new THREE.MeshStandardMaterial({ color: '#090d16', metalness: 0.9, roughness: 0.2 });
+    const signBoard = new THREE.Mesh(signBoardGeom, signBoardMat);
+    signGroup.add(signBoard);
+
+    // Glowing Neon Letters / Band
+    const neonMat = new THREE.MeshStandardMaterial({
+      color: '#ff2d55',
+      emissive: '#ff2d55',
+      emissiveIntensity: 3.8,
+      roughness: 0.1
+    });
+    const neonBarGeom = new THREE.BoxGeometry(dims.width * 0.65, 0.3, 0.45);
+    const neonBar = new THREE.Mesh(neonBarGeom, neonMat);
+    neonBar.position.y = 0.55;
+    signGroup.add(neonBar);
+
+    const neonBar2 = neonBar.clone();
+    neonBar2.material = new THREE.MeshStandardMaterial({
+      color: '#00f0ff',
+      emissive: '#00f0ff',
+      emissiveIntensity: 3.8,
+      roughness: 0.1
+    });
+    neonBar2.position.y = -0.55;
+    signGroup.add(neonBar2);
+
+    group.add(signGroup);
+    return group;
+  }
+
+  // GTA 6 Asphalt Highway / Boulevard Road with Curbs & Puddles
+  buildRoadMesh(actor) {
+    const group = new THREE.Group();
+    const width = actor.dimensions?.width || 14;
+    const length = actor.dimensions?.depth || 140;
+
+    // 1. Asphalt Deck
+    const roadMat = new THREE.MeshStandardMaterial({
+      color: '#ffffff',
+      roughness: 0.35,
+      metalness: 0.4
+    });
+    if (this.textures['asphalt_road']) {
+      roadMat.map = this.textures['asphalt_road'];
+      roadMat.map.repeat.set(1, Math.round(length / 14));
+      if (this.textures['asphalt_road_normal']) {
+        roadMat.normalMap = this.textures['asphalt_road_normal'];
+        roadMat.normalScale = new THREE.Vector2(1.5, 1.5);
+        roadMat.normalMap.repeat.set(1, Math.round(length / 14));
+      }
+    }
+
+    const roadGeom = new THREE.BoxGeometry(width, 0.3, length);
+    const roadMesh = new THREE.Mesh(roadGeom, roadMat);
+    roadMesh.position.y = 0.15;
+    roadMesh.receiveShadow = true;
+    group.add(roadMesh);
+
+    // 2. Concrete Curbs (Left & Right)
+    const curbMat = new THREE.MeshStandardMaterial({ color: '#94a3b8', roughness: 0.7, metalness: 0.1 });
+    const curbGeom = new THREE.BoxGeometry(0.5, 0.45, length);
+    const curbL = new THREE.Mesh(curbGeom, curbMat);
+    curbL.position.set(-width / 2 - 0.25, 0.22, 0);
+    curbL.receiveShadow = true;
+    curbL.castShadow = true;
+
+    const curbR = curbL.clone();
+    curbR.position.x = width / 2 + 0.25;
+    group.add(curbL, curbR);
+
+    // 3. Sidewalk Promenade (Pedestrian walkway)
+    const walkMat = new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.6, metalness: 0.1 });
+    const walkGeom = new THREE.BoxGeometry(4.0, 0.4, length);
+    const walkL = new THREE.Mesh(walkGeom, walkMat);
+    walkL.position.set(-width / 2 - 2.5, 0.2, 0);
+    walkL.receiveShadow = true;
+    group.add(walkL);
+
+    return group;
+  }
+
+  // GTA 6 Coastal Boulevard Street Light Lamppost
+  buildStreetLightMesh(actor) {
+    const group = new THREE.Group();
+    const height = 6.5;
+
+    const metalMat = new THREE.MeshStandardMaterial({ color: '#334155', metalness: 0.85, roughness: 0.25 });
+
+    // Vertical Post
+    const postGeom = new THREE.CylinderGeometry(0.12, 0.18, height, 12);
+    const post = new THREE.Mesh(postGeom, metalMat);
+    post.position.y = height / 2;
+    post.castShadow = true;
+    group.add(post);
+
+    // Overhanging Arm
+    const armGeom = new THREE.BoxGeometry(2.0, 0.1, 0.1);
+    const arm = new THREE.Mesh(armGeom, metalMat);
+    arm.position.set(0.9, height - 0.1, 0);
+    group.add(arm);
+
+    // Luminaire Housing & Emissive Lens
+    const headGeom = new THREE.BoxGeometry(0.6, 0.12, 0.35);
+    const headMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.9, roughness: 0.2 });
+    const head = new THREE.Mesh(headGeom, headMat);
+    head.position.set(1.7, height - 0.2, 0);
+    group.add(head);
+
+    const lensGeom = new THREE.BoxGeometry(0.5, 0.04, 0.28);
+    const lensMat = new THREE.MeshStandardMaterial({
+      color: '#fef08a',
+      emissive: '#fef08a',
+      emissiveIntensity: 4.0
+    });
+    const lens = new THREE.Mesh(lensGeom, lensMat);
+    lens.position.set(1.7, height - 0.28, 0);
+    group.add(lens);
+
+    // Warm street light casting down
+    const streetLight = new THREE.SpotLight('#fef08a', 3.2, 22, Math.PI / 4, 0.4);
+    streetLight.position.set(1.7, height - 0.3, 0);
+    streetLight.target.position.set(1.7, 0, 0);
+    group.add(streetLight);
+    group.add(streetLight.target);
+
+    return group;
+  }
+
+  // GTA 6 Traffic Safety Cone (Physics Prop)
+  buildTrafficConeMesh(actor) {
+    const group = new THREE.Group();
+
+    // Base square
+    const baseMat = new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.4 });
+    const baseGeom = new THREE.BoxGeometry(0.6, 0.06, 0.6);
+    const base = new THREE.Mesh(baseGeom, baseMat);
+    base.position.y = 0.03;
+    base.castShadow = true;
+    group.add(base);
+
+    // Orange Cone
+    const coneGeom = new THREE.ConeGeometry(0.24, 0.85, 16);
+    const cone = new THREE.Mesh(coneGeom, baseMat);
+    cone.position.y = 0.45;
+    cone.castShadow = true;
+    group.add(cone);
+
+    // Reflective White Band
+    const bandMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.2, metalness: 0.5 });
+    const bandGeom = new THREE.CylinderGeometry(0.14, 0.17, 0.2, 16);
+    const band = new THREE.Mesh(bandGeom, bandMat);
+    band.position.y = 0.42;
+    group.add(band);
+
+    return group;
+  }
+
   createPBRMaterial(actor) {
     // Unreal Engine 'Lighting Only' Viewport Mode (Neutral White Clay)
     if (this.viewMode === 'lightingOnly') {
@@ -1203,6 +1897,11 @@ class Renderer3D {
       this.scene.remove(mesh);
       this.meshMap.delete(actor);
       actor._runtime.threeMesh = null;
+
+      // Clean up GTA 6 dynamic simulation meshes
+      this.animatedOceans = this.animatedOceans.filter(m => m !== mesh);
+      this.animatedPalms = this.animatedPalms.filter(m => m !== mesh);
+      this.animatedVehicles = this.animatedVehicles.filter(v => v.group !== mesh && v.actor !== actor);
     }
   }
 
@@ -1245,6 +1944,58 @@ class Renderer3D {
         pos[i * 3] += Math.sin(time * 0.2 + d.offset) * 0.008;
       }
       this.motePoints.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Animate GTA 6 Coastal Ocean Water Waves
+    if (this.animatedOceans && this.animatedOceans.length > 0) {
+      const time = performance.now() * 0.001;
+      for (const ocean of this.animatedOceans) {
+        if (!ocean.geometry?.attributes?.position) continue;
+        const pos = ocean.geometry.attributes.position;
+        const init = ocean.userData.initialPositions;
+        if (!init) continue;
+
+        for (let i = 0; i < pos.count; i++) {
+          const ix = init[i * 3];
+          const iz = init[i * 3 + 2];
+          const wave = Math.sin(ix * 0.12 + time * 2.2) * 0.45 + Math.cos(iz * 0.10 + time * 1.6) * 0.35;
+          pos.setY(i, wave);
+        }
+        pos.needsUpdate = true;
+        ocean.geometry.computeVertexNormals();
+      }
+    }
+
+    // Animate GTA 6 Tropical Palm Trees Frond Wind Sway
+    if (this.animatedPalms && this.animatedPalms.length > 0) {
+      const time = performance.now() * 0.001;
+      for (const palm of this.animatedPalms) {
+        if (palm.userData?.fronds) {
+          for (let i = 0; i < palm.userData.fronds.length; i++) {
+            const f = palm.userData.fronds[i];
+            f.rotation.z = f.userData.baseRotZ + Math.sin(time * 2.4 + i * 0.8) * 0.08;
+            f.rotation.x = f.userData.baseRotX + Math.cos(time * 1.8 + i * 0.8) * 0.05;
+          }
+        }
+      }
+    }
+
+    // Update GTA 6 Vehicle Interactive Hover Badge proximity
+    if (this.animatedVehicles && this.animatedVehicles.length > 0) {
+      const player = this.engine.actors.find(a => a.tag === 'player');
+      for (const v of this.animatedVehicles) {
+        if (v.rig?.badgeSprite) {
+          if (!this.engine.isPlaying || this.engine.currentVehicle === v.actor) {
+            v.rig.badgeSprite.visible = false;
+          } else if (player) {
+            const dx = player.transform.position.x - v.actor.transform.position.x;
+            const dy = player.transform.position.y - v.actor.transform.position.y;
+            const dz = player.transform.position.z - v.actor.transform.position.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            v.rig.badgeSprite.visible = dist < 4.5;
+          }
+        }
+      }
     }
 
     // Subtle Volumetric God Ray Shimmer

@@ -22,6 +22,19 @@ class NovaEngine3D {
     this.playSnapshot = null;
     this.score = 0;
 
+    // GTA 6 Vehicle & Open World State
+    this.currentVehicle = null;
+    this.vehicleSpeed = 0;
+    this.vehicleSteer = 0;
+    this.vehicleDrifting = false;
+    this.wheelRotation = 0;
+    this.wantedLevel = 0;
+    this.cash = 2548900;
+    this.sirenTimer = 0;
+    this.engineSoundTimer = 0;
+    this.driftSoundTimer = 0;
+    this.nearCar = null;
+
     // Combat & FX State
     this.projectiles = [];
     this.cameraShake = 0;
@@ -52,8 +65,8 @@ class NovaEngine3D {
     });
     canvasElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // Load initial 3D Adventure Template
-    this.loadTemplate('adventure3d');
+    // Load initial GTA 6 Vice City Open World Template
+    this.loadTemplate('gta6_vice_city');
 
     // Start 3D Loop
     requestAnimationFrame((t) => this.loop(t));
@@ -68,8 +81,19 @@ class NovaEngine3D {
       }
       this.keys[e.code] = true;
 
-      // Combat: F or Q = Fire Plasma Cannon in Play Mode
-      if ((e.code === 'KeyF' || e.code === 'KeyQ') && this.isPlaying) {
+      // GTA 6: Key F = Enter / Exit Vehicle, or fire blaster if walking
+      if (e.code === 'KeyF' && this.isPlaying) {
+        if (this.currentVehicle) {
+          this.exitVehicle();
+        } else if (this.nearCar) {
+          this.enterVehicle(this.nearCar);
+        } else {
+          this.firePlasmaCannon();
+        }
+      }
+
+      // Combat: Key Q = Always Fire Plasma Cannon in Play Mode
+      if (e.code === 'KeyQ' && this.isPlaying) {
         this.firePlasmaCannon();
       }
 
@@ -115,7 +139,8 @@ class NovaEngine3D {
 
   loadTemplate(key) {
     let tpl;
-    if (key === 'adventure3d') tpl = EngineTemplates3D.createAdventure3D();
+    if (key === 'gta6_vice_city' || key === 'gta6' || key === 'vice_city') tpl = EngineTemplates3D.createGTA6ViceCity();
+    else if (key === 'adventure3d') tpl = EngineTemplates3D.createAdventure3D();
     else if (key === 'cyberpunk3d') tpl = EngineTemplates3D.createCyberpunk3D();
     else if (key === 'physics3d') tpl = EngineTemplates3D.createPhysicsPlayground3D();
     else tpl = { name: 'Dự Án 3D Trống', actors: [] };
@@ -250,6 +275,13 @@ class NovaEngine3D {
     this.cameraShake = 0;
 
     this.particles3d.clear();
+    this.currentVehicle = null;
+    this.vehicleSpeed = 0;
+    this.vehicleSteer = 0;
+    this.vehicleDrifting = false;
+    this.wantedLevel = 0;
+    this.nearCar = null;
+
     this.selectedActor = this.actors.find(a => a.tag === 'player') || this.actors[0] || null;
     if (this.selectedActor && this.renderer3d) {
       this.renderer3d.syncActorMesh(this.selectedActor);
@@ -299,13 +331,46 @@ class NovaEngine3D {
   }
 
   updateSimulation(dt) {
-    // 1. Update 3D Behaviors & Character Articulated Animation
+    // 1. GTA 6 Vehicle Simulation or Proximity Check
+    if (this.currentVehicle) {
+      this.updateDriving(dt);
+      this.nearCar = null;
+    } else {
+      // Find closest drivable car
+      const player = this.actors.find(a => a.tag === 'player');
+      this.nearCar = null;
+      if (player) {
+        for (const actor of this.actors) {
+          if (actor.tag === 'vehicle' || actor.shape === 'vehicle') {
+            const dx = actor.transform.position.x - player.transform.position.x;
+            const dy = actor.transform.position.y - player.transform.position.y;
+            const dz = actor.transform.position.z - player.transform.position.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (dist < 4.0) {
+              this.nearCar = actor;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Wanted Level Police Sirens
+    if (this.wantedLevel > 0) {
+      this.sirenTimer += dt;
+      if (this.sirenTimer > 5.0) {
+        this.sound.play('snd_siren');
+        this.sirenTimer = 0;
+      }
+    }
+
+    // 3. Update 3D Behaviors & Character Articulated Animation
     this.updateBehaviors(dt);
 
-    // 2. Update Plasma Cannon Projectiles & Combat Explosions
+    // 4. Update Plasma Cannon Projectiles & Combat Explosions
     this.updateProjectiles(dt);
 
-    // 3. Update Cannon.js 3D Physics
+    // 5. Update Cannon.js 3D Physics
     if (this.physics3d) {
       this.physics3d.update(dt);
     }
@@ -486,11 +551,260 @@ class NovaEngine3D {
     this.log(`💥 THÙNG NỔ PHÁT HỎA! Phá hủy mục tiêu xung quanh!`, 'success');
   }
 
+  // GTA 6 Vehicle Simulation & Dynamic Physics Handling
+  updateDriving(dt) {
+    const car = this.currentVehicle;
+    if (!car) return;
+
+    const cam = this.renderer3d.camera;
+    const accelInput = (this.isKeyDown('KeyW') || this.isKeyDown('ArrowUp')) ? 1 : 0;
+    const brakeInput = (this.isKeyDown('KeyS') || this.isKeyDown('ArrowDown')) ? 1 : 0;
+    const leftInput = (this.isKeyDown('KeyA') || this.isKeyDown('ArrowLeft')) ? 1 : 0;
+    const rightInput = (this.isKeyDown('KeyD') || this.isKeyDown('ArrowRight')) ? 1 : 0;
+    const handbrake = this.isKeyDown('Space');
+
+    // Honk Horn
+    if (this.isKeyPressed('KeyE') || this.isKeyPressed('KeyH')) {
+      this.sound.play('snd_horn');
+    }
+
+    // 1. Acceleration & Braking Dynamics
+    const maxSpeed = 42.0; // ~150 km/h
+    const maxReverse = -12.0;
+    const accelRate = 26.0;
+    const brakeRate = 34.0;
+    const frictionRate = 6.0;
+
+    if (accelInput) {
+      if (this.vehicleSpeed < 0) {
+        this.vehicleSpeed += brakeRate * dt;
+      } else {
+        this.vehicleSpeed = Math.min(maxSpeed, this.vehicleSpeed + accelRate * dt);
+      }
+
+      // Throttle audio
+      this.engineSoundTimer += dt;
+      if (this.engineSoundTimer > 0.35) {
+        this.sound.play('snd_engine');
+        this.engineSoundTimer = 0;
+      }
+
+      // Nitro / exhaust flames from dual exhausts
+      if (Math.random() < 0.25) {
+        const rad = EngineMath.degToRad(car.transform.rotation.y);
+        const rearX = car.transform.position.x - Math.sin(rad) * 2.2;
+        const rearZ = car.transform.position.z - Math.cos(rad) * 2.2;
+        this.particles3d.exhaustFlame(rearX, car.transform.position.y + 0.4, rearZ);
+      }
+    } else if (brakeInput) {
+      if (this.vehicleSpeed > 0.5) {
+        this.vehicleSpeed = Math.max(0, this.vehicleSpeed - brakeRate * dt);
+      } else {
+        this.vehicleSpeed = Math.max(maxReverse, this.vehicleSpeed - accelRate * 0.5 * dt);
+      }
+    } else {
+      // Natural rolling friction / aerodynamic drag
+      if (this.vehicleSpeed > 0) {
+        this.vehicleSpeed = Math.max(0, this.vehicleSpeed - frictionRate * dt);
+      } else if (this.vehicleSpeed < 0) {
+        this.vehicleSpeed = Math.min(0, this.vehicleSpeed + frictionRate * dt);
+      }
+    }
+
+    // 2. Steering Dynamics
+    let targetSteer = 0;
+    if (leftInput) targetSteer = 0.52;
+    if (rightInput) targetSteer = -0.52;
+    this.vehicleSteer = THREE.MathUtils.lerp(this.vehicleSteer, targetSteer, dt * 10.0);
+
+    // 3. Handbrake Drift Physics
+    const speedRatio = Math.abs(this.vehicleSpeed) / maxSpeed;
+    if (handbrake && speedRatio > 0.15) {
+      this.vehicleDrifting = true;
+      this.vehicleSpeed *= Math.pow(0.95, dt * 60);
+
+      // Drift screech audio
+      this.driftSoundTimer += dt;
+      if (this.driftSoundTimer > 0.25) {
+        this.sound.play('snd_screech');
+        this.driftSoundTimer = 0;
+      }
+
+      // Spawn dense tire drift smoke at rear wheels
+      const rad = EngineMath.degToRad(car.transform.rotation.y);
+      const sideX = Math.cos(rad) * 1.0;
+      const sideZ = -Math.sin(rad) * 1.0;
+      const rearX = car.transform.position.x - Math.sin(rad) * 1.4;
+      const rearZ = car.transform.position.z - Math.cos(rad) * 1.4;
+      this.particles3d.driftSmoke(rearX + sideX, car.transform.position.y + 0.2, rearZ + sideZ);
+      this.particles3d.driftSmoke(rearX - sideX, car.transform.position.y + 0.2, rearZ - sideZ);
+    } else {
+      this.vehicleDrifting = false;
+    }
+
+    // 4. Update Vehicle Position & Heading
+    const turnMultiplier = this.vehicleDrifting ? 115.0 : 68.0;
+    const steerHeadingFactor = (this.vehicleSpeed / maxSpeed) * this.vehicleSteer * turnMultiplier;
+    car.transform.rotation.y += steerHeadingFactor * dt;
+
+    const headingRad = EngineMath.degToRad(car.transform.rotation.y);
+    const forwardX = Math.sin(headingRad);
+    const forwardZ = Math.cos(headingRad);
+
+    car.transform.position.x += forwardX * this.vehicleSpeed * dt;
+    car.transform.position.z += forwardZ * this.vehicleSpeed * dt;
+
+    // Boundary clamping (ocean edge)
+    if (car.transform.position.x < -18) car.transform.position.x = -18;
+
+    // 5. Animate Wheels (Spin + Steering Turn)
+    this.wheelRotation += (this.vehicleSpeed / 0.42) * dt;
+    const rig = car._runtime.vehicleRig;
+    if (rig) {
+      // Turn front wheel pivots
+      if (rig.wFL?.pivot) rig.wFL.pivot.rotation.y = this.vehicleSteer;
+      if (rig.wFR?.pivot) rig.wFR.pivot.rotation.y = this.vehicleSteer;
+
+      // Rotate wheel meshes around their axle
+      if (rig.wFL?.mesh) rig.wFL.mesh.rotation.x = this.wheelRotation;
+      if (rig.wFR?.mesh) rig.wFR.mesh.rotation.x = this.wheelRotation;
+      if (rig.wBL?.mesh) rig.wBL.mesh.rotation.x = this.wheelRotation;
+      if (rig.wBR?.mesh) rig.wBR.mesh.rotation.x = this.wheelRotation;
+
+      // Brake light brightness
+      if (rig.tailMesh) {
+        rig.tailMesh.material.emissiveIntensity = brakeInput ? 6.0 : 3.5;
+      }
+    }
+
+    // 6. GTA 6 Vehicle Chase Camera (Cinematic Dynamic Spring Arm)
+    const camDist = this.vehicleDrifting ? 9.5 : 8.2;
+    const camHeight = 3.2;
+    const desiredCamPos = new THREE.Vector3(
+      car.transform.position.x - forwardX * camDist,
+      car.transform.position.y + camHeight,
+      car.transform.position.z - forwardZ * camDist
+    );
+    cam.position.lerp(desiredCamPos, 0.14);
+    cam.lookAt(
+      car.transform.position.x + forwardX * 3.0,
+      car.transform.position.y + 1.2,
+      car.transform.position.z + forwardZ * 3.0
+    );
+
+    if (this.renderer3d.orbitControls) {
+      this.renderer3d.orbitControls.target.set(
+        car.transform.position.x,
+        car.transform.position.y + 1.2,
+        car.transform.position.z
+      );
+    }
+
+    // 7. Check Collisions with Props (Barrels, Cones, Crates)
+    for (const actor of this.actors) {
+      if (actor === car || actor.tag === 'player' || actor.tag === 'road' || actor.tag === 'ocean') continue;
+      const dx = actor.transform.position.x - car.transform.position.x;
+      const dy = actor.transform.position.y - car.transform.position.y;
+      const dz = actor.transform.position.z - car.transform.position.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+      if (dist < 2.4) {
+        // High-speed collision
+        if (Math.abs(this.vehicleSpeed) > 6.0) {
+          const body = actor._runtime.cannonBody;
+          if (body) {
+            const hitFactor = this.vehicleSpeed * 2.2;
+            body.velocity.x += forwardX * hitFactor;
+            body.velocity.y += 8.0;
+            body.velocity.z += forwardZ * hitFactor;
+          } else {
+            actor.transform.position.x += forwardX * 3.0;
+            actor.transform.position.y += 1.5;
+            actor.transform.position.z += forwardZ * 3.0;
+          }
+
+          // Sparks / Impact
+          this.particles3d.sparks(actor.transform.position.x, actor.transform.position.y + 0.5, actor.transform.position.z, '#fbbf24');
+          this.sound.play('snd_hit');
+          this.cameraShake = 0.35;
+
+          // Detonate barrels
+          if (actor.tag === 'barrel') {
+            this.explodeBarrel(actor);
+          }
+
+          // Increase Wanted Level ⭐
+          if (this.wantedLevel < 5 && Math.random() < 0.4) {
+            this.wantedLevel++;
+            this.sound.play('snd_siren');
+            this.log(`🚨 MỨC ĐỘ TRUY NÃ TĂNG: ${'★'.repeat(this.wantedLevel)} (Wanted Level ${this.wantedLevel})!`, 'error');
+          }
+        }
+      }
+    }
+  }
+
+  // Enters a vehicle
+  enterVehicle(carActor) {
+    this.currentVehicle = carActor;
+    this.vehicleSpeed = 0;
+    this.vehicleSteer = 0;
+    this.sound.play('snd_car_door');
+    this.sound.play('snd_engine');
+    this.log(`🏎️ BẠN ĐÃ LÊN SIÊU XE ${carActor.name.toUpperCase()}!\n- Dùng W/S để Tăng tốc / Lùi.\n- A/D để Bẻ lái.\n- Phím SPACE để DRIFT bốc khói lốp.\n- Phím E/H để Bấm còi xe.\n- Phím F để Xuống xe.`, 'success');
+  }
+
+  // Exits current vehicle
+  exitVehicle() {
+    if (!this.currentVehicle) return;
+    const car = this.currentVehicle;
+    const headingRad = EngineMath.degToRad(car.transform.rotation.y);
+    const sideX = Math.cos(headingRad) * 2.4;
+    const sideZ = -Math.sin(headingRad) * 2.4;
+
+    const player = this.actors.find(a => a.tag === 'player');
+    if (player) {
+      player.transform.position.x = car.transform.position.x - sideX;
+      player.transform.position.y = car.transform.position.y + 0.5;
+      player.transform.position.z = car.transform.position.z - sideZ;
+
+      if (player._runtime.cannonBody) {
+        player._runtime.cannonBody.position.set(
+          player.transform.position.x,
+          player.transform.position.y,
+          player.transform.position.z
+        );
+        player._runtime.cannonBody.velocity.set(0, 0, 0);
+      }
+      if (player._runtime.threeMesh) {
+        player._runtime.threeMesh.visible = true;
+      }
+    }
+
+    this.currentVehicle = null;
+    this.vehicleSpeed = 0;
+    this.sound.play('snd_car_door');
+    this.log('🚶 Đã rời xe! Bạn đang đi bộ (Bấm F gần xe để lái tiếp).', 'info');
+  }
+
   updateBehaviors(dt) {
     const cam = this.renderer3d.camera;
 
     for (const actor of this.actors) {
       if (!actor.visible) continue;
+
+      // If player is inside vehicle, driving simulation controls position
+      if (actor.tag === 'player' && this.currentVehicle) {
+        actor.transform.position.x = this.currentVehicle.transform.position.x;
+        actor.transform.position.y = this.currentVehicle.transform.position.y + 0.4;
+        actor.transform.position.z = this.currentVehicle.transform.position.z;
+        if (actor._runtime.threeMesh) {
+          actor._runtime.threeMesh.visible = false;
+        }
+        continue;
+      } else if (actor.tag === 'player' && actor._runtime.threeMesh) {
+        actor._runtime.threeMesh.visible = true;
+      }
 
       // 1. Third-Person Character Controller 3D with Articulated Kinematic Rig
       const charBeh = actor.getBehavior('characterController3D');
@@ -609,7 +923,7 @@ class NovaEngine3D {
 
       // 2. Third-Person Camera Follow 3D (Spring Arm)
       const camBeh = actor.getBehavior('cameraFollow3D');
-      if (camBeh) {
+      if (camBeh && !this.currentVehicle) {
         const dist = camBeh.distance || 7.0;
         const height = camBeh.height || 3.5;
         const targetPos = actor.transform.position;
