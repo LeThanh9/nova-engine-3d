@@ -289,3 +289,4 @@ class GameExporter3D {
 }
 
 window.GameExporter3D = GameExporter3D;
+

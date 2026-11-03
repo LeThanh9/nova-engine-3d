@@ -3,7 +3,10 @@
 **NovaEngine 3D** là một Game Engine 3D hoàn chỉnh, hiện đại mang phong cách **Unreal Engine 4**, chạy mượt mà cả trên **Trình duyệt Web** và **Ứng dụng Desktop Windows (.EXE)**. Bạn có thể thực hiện **100% các công đoạn làm game 3D trực tiếp trong Engine**:
 
 - 🌐 **Repository GitHub:** [https://github.com/LeThanh9/nova-engine-3d](https://github.com/LeThanh9/nova-engine-3d)
+- 🚀 **Trải nghiệm trực tuyến (GitHub Pages):** [https://lethanh9.github.io/nova-engine-3d/](https://lethanh9.github.io/nova-engine-3d/)
 - 🎮 **Giao diện chuẩn Unreal Engine 4:** Bảng Modes/Place Actors bên trái, World Outliner góc trên bên phải, Details Panel góc dưới bên phải, thanh công cụ Viewport với chế độ Translate (W), Rotate (E), Scale (R), Snapping và Camera Speed.
+
+![NovaEngine 3D Studio - Unreal Edition](current_viewport_render.png)
 
 ---
 

@@ -10,49 +10,57 @@ class Actor3D {
     this.visible = options.visible !== undefined ? options.visible : true;
     this.locked = options.locked || false;
 
-    // 3D Transform
+    // 3D Transform (supports both flat { x, y, z } and nested { transform: { position: { x, y, z } } })
+    const trans = options.transform || {};
+    const pos = trans.position || options.position || {};
+    const rot = trans.rotation || options.rotation || {};
+    const scl = trans.scale || options.scale || {};
+
     this.transform = {
       position: {
-        x: options.position?.x ?? options.x ?? 0,
-        y: options.position?.y ?? options.y ?? 0,
-        z: options.position?.z ?? options.z ?? 0
+        x: pos.x ?? options.x ?? 0,
+        y: pos.y ?? options.y ?? 0,
+        z: pos.z ?? options.z ?? 0
       },
       rotation: {
-        x: options.rotation?.x ?? 0,
-        y: options.rotation?.y ?? 0,
-        z: options.rotation?.z ?? 0
+        x: rot.x ?? 0,
+        y: rot.y ?? 0,
+        z: rot.z ?? 0
       }, // Degrees
       scale: {
-        x: options.scale?.x ?? 1,
-        y: options.scale?.y ?? 1,
-        z: options.scale?.z ?? 1
+        x: scl.x ?? 1,
+        y: scl.y ?? 1,
+        z: scl.z ?? 1
       }
     };
 
-    // 3D Geometry
-    this.shape = options.shape || 'box'; // 'box', 'sphere', 'cylinder', 'capsule', 'cone', 'torus', 'plane', 'light', 'particle'
+    // 3D Geometry Dimensions
+    this.shape = options.shape || 'box'; // 'box', 'sphere', 'cylinder', 'capsule', 'cone', 'torus', 'plane', 'light', 'particle', 'character'
+    const dims = options.dimensions || {};
     this.dimensions = {
-      width: options.dimensions?.width ?? options.width ?? 2,
-      height: options.dimensions?.height ?? options.height ?? 2,
-      depth: options.dimensions?.depth ?? options.depth ?? 2,
-      radius: options.dimensions?.radius ?? 1,
-      radiusTop: options.dimensions?.radiusTop ?? 1,
-      radiusBottom: options.dimensions?.radiusBottom ?? 1,
-      radialSegments: options.dimensions?.radialSegments ?? 32
+      width: dims.width ?? options.width ?? 2,
+      height: dims.height ?? options.height ?? 2,
+      depth: dims.depth ?? options.depth ?? 2,
+      radius: dims.radius ?? options.radius ?? 1,
+      radiusTop: dims.radiusTop ?? options.radiusTop ?? 1,
+      radiusBottom: dims.radiusBottom ?? options.radiusBottom ?? 1,
+      radialSegments: dims.radialSegments ?? 32
     };
 
     // Unreal Engine 4 PBR Material Properties
+    const mat = options.material || {};
     this.material = {
-      color: options.material?.color || options.color || '#3b82f6',
-      metalness: options.material?.metalness ?? 0.1,
-      roughness: options.material?.roughness ?? 0.5,
-      emissive: options.material?.emissive || '#000000',
-      emissiveIntensity: options.material?.emissiveIntensity ?? 0.0,
-      wireframe: options.material?.wireframe ?? false,
-      opacity: options.material?.opacity ?? 1.0,
-      transparent: options.material?.transparent ?? false,
-      castShadow: options.material?.castShadow ?? true,
-      receiveShadow: options.material?.receiveShadow ?? true
+      color: mat.color || options.color || '#3b82f6',
+      metalness: mat.metalness ?? options.metalness ?? 0.2,
+      roughness: mat.roughness ?? options.roughness ?? 0.5,
+      emissive: mat.emissive || options.emissive || '#000000',
+      emissiveIntensity: mat.emissiveIntensity ?? options.emissiveIntensity ?? 0.0,
+      wireframe: mat.wireframe ?? options.wireframe ?? false,
+      opacity: mat.opacity ?? options.opacity ?? 1.0,
+      transparent: mat.transparent ?? options.transparent ?? false,
+      castShadow: mat.castShadow ?? true,
+      receiveShadow: mat.receiveShadow ?? true,
+      textureType: mat.textureType || null // 'scifi_hex', 'metal_plate', 'grid_circuit'
     };
 
     // 3D Physics (Cannon.js integration)
@@ -144,7 +152,6 @@ class Actor3D {
     this.behaviors = this.behaviors.filter(b => b.type !== type);
   }
 
-  // Clone Actor
   clone() {
     const data = this.serialize();
     data.id = EngineMath.generateId('actor');
@@ -158,7 +165,6 @@ class Actor3D {
     return JSON.parse(JSON.stringify(this.serialize()));
   }
 
-  // Serialize to JSON
   serialize() {
     return {
       id: this.id,

@@ -1,7 +1,10 @@
 /**
  * NovaEngine 3D - Main Application Bootstrap & Electron IPC Handler
  */
-window.addEventListener('DOMContentLoaded', () => {
+function initNovaEngine3D() {
+  if (window.__nova_3d_booted) return;
+  window.__nova_3d_booted = true;
+
   // Initialize 3D Engine
   const engine3d = new NovaEngine3D();
   window.engine3d = engine3d;
@@ -69,7 +72,13 @@ window.addEventListener('DOMContentLoaded', () => {
         engine3d.log('💻 Đang chạy trong môi trường Native Windows Desktop (Electron Runtime)', 'success');
       }
     } catch (e) {
-      // Browser environment, normal
+      // Browser environment
     }
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initNovaEngine3D);
+} else {
+  initNovaEngine3D();
+}

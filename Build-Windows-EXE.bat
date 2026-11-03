@@ -22,3 +22,4 @@ echo   XUAT FILE EXE HOAN TAT!
 echo   Kiem tra file .exe tai thu muc: e:\game-engine\dist\
 echo ===================================================
 pause
+

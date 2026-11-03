@@ -114,6 +114,13 @@ class NovaEngine3D {
     this.selectedActor = this.actors.find(a => a.tag === 'player') || this.actors[0] || null;
     this.score = 0;
 
+    if (this.selectedActor && this.renderer3d?.transformControls && this.renderer3d.meshMap) {
+      const mesh = this.renderer3d.meshMap.get(this.selectedActor);
+      if (mesh) {
+        this.renderer3d.transformControls.attach(mesh);
+      }
+    }
+
     if (this.ui) {
       this.ui.refreshAll();
     }
@@ -466,8 +473,13 @@ class NovaEngine3D {
 
   selectActor(actor) {
     this.selectedActor = actor;
-    if (actor && !this.isPlaying && this.renderer3d) {
-      this.renderer3d.syncActorMesh(actor);
+    if (this.renderer3d?.transformControls && this.renderer3d.meshMap) {
+      if (actor && !this.isPlaying) {
+        const mesh = this.renderer3d.meshMap.get(actor);
+        if (mesh) this.renderer3d.transformControls.attach(mesh);
+      } else {
+        this.renderer3d.transformControls.detach();
+      }
     }
     if (this.ui) {
       this.ui.refreshAll();
@@ -486,3 +498,4 @@ class NovaEngine3D {
 }
 
 window.NovaEngine3D = NovaEngine3D;
+
